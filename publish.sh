@@ -27,7 +27,8 @@ elif [[ "$1" == "patch" ]]
 then
     let CURRENT_PATCH=$CURRENT_PATCH+1
 else
-    echo "Not valid"
+    echo "Missing or invalid argument. Valid arguments are: major|minor|patch"
+    exit
 fi
 
 echo "Publishing v$CURRENT_MAJOR.$CURRENT_MINOR.$CURRENT_PATCH"
