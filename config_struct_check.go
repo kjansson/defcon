@@ -57,10 +57,10 @@ func checkStruct(v *reflect.Value) error {
 					if err != nil {
 						return err
 					}
-					if requiredTag && integer == 0 {
+					if requiredTag && v.Field(i).Int() == 0 {
 						return fmt.Errorf("Integer field %s is marked as required but has zero value", v.Type().Field(i).Name)
 					}
-					if defaultTag {
+					if defaultTag && v.Field(i).Int() == 0 {
 						v.Field(i).SetInt(int64(integer))
 					}
 				case "float":
@@ -76,17 +76,17 @@ func checkStruct(v *reflect.Value) error {
 					if err != nil {
 						return err
 					}
-					if requiredTag && floating == 0 {
+					if requiredTag && v.Field(i).Float() == 0 {
 						return fmt.Errorf("Error while parsing float value on field %s. Invalid type?", v.Type().Field(i).Name)
 					}
-					if defaultTag {
+					if defaultTag && v.Field(i).Float() == 0 {
 						v.Field(i).SetFloat(floating)
 					}
 				case "string":
 					if requiredTag && v.Field(i).Len() == 0 {
 						return fmt.Errorf("required value missing in string field %s", v.Type().Field(i).Name)
 					}
-					if defaultTag {
+					if defaultTag && v.Field(i).Len() == 0 {
 						v.Field(i).SetString(defaultTagValue)
 					}
 				}
