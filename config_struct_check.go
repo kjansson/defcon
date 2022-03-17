@@ -7,7 +7,13 @@ import (
 	"strconv"
 )
 
-// Just a wrapper function to avoid having to do the reflection of the struct
+// CheckConfigStruct accepts any struct (supports nested structs) and will check all values and their tags.
+// It will change all values where the tag `default:"<value>"` is present and a valid value is given.
+//
+// It will return an error if one or more of the following conditions are met.
+// A field is tagged with `required:"true"` and A: is a string but the value is empty or B: is a numerical type but the value is zero.
+// A field is tagged with `default:"<value>"` but the value is not valid for the type of the field
+// A field is tagged with both `default:"<value>"` and `required:"true"`
 func CheckConfigStruct(config interface{}) error {
 	c := reflect.ValueOf(config).Elem()
 	return checkStruct(&c)
@@ -43,7 +49,7 @@ func checkStruct(v *reflect.Value) error {
 					} else {
 						bits, err = strconv.Atoi(typeInfo[2])
 						if err != nil {
-							return fmt.Errorf("Error while parsing type on field %s, this should not happen.", v.Type().Field(i).Name)
+							return fmt.Errorf("Error while parsing integer value on field %s. Invalid type?", v.Type().Field(i).Name)
 						}
 					}
 					integer, err := strconv.ParseInt(defaultTagValue, 10, bits)
@@ -62,7 +68,7 @@ func checkStruct(v *reflect.Value) error {
 					} else {
 						bits, err = strconv.Atoi(typeInfo[2])
 						if err != nil {
-							return fmt.Errorf("Error while parsing type on field %s, this should not happen.", v.Type().Field(i).Name)
+							return fmt.Errorf("Error while parsing integer value on field %s. Invalid type?", v.Type().Field(i).Name)
 						}
 					}
 					floating, err := strconv.ParseFloat(defaultTagValue, bits)
@@ -70,7 +76,7 @@ func checkStruct(v *reflect.Value) error {
 						return err
 					}
 					if requiredTag && floating == 0 {
-						return fmt.Errorf("Float field %s is marked as required but has zero value", v.Type().Field(i).Name)
+						return fmt.Errorf("Error while parsing float value on field %s. Invalid type?", v.Type().Field(i).Name)
 					}
 					if defaultTag {
 						v.Field(i).SetFloat(floating)
