@@ -8,6 +8,7 @@ import (
 )
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will check all values and their tags.
+// The supported tags are "default" and "required". Supported types to tag are all ints, floats and string.
 // It will change all values where the tag `default:"<value>"` is present and a valid value is given.
 //
 // It will return an error if one or more of the following conditions are met.
