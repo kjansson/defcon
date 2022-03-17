@@ -2,6 +2,8 @@
 # Usage: publish major|minor|patch
 # Will automatically increment from last git tag and tag/push/publish
 
+set -e
+
 CURRENT_VER=$(git tag | sort | tail -n 1)
 if ! [[ "$CURRENT_VER" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo "Could not get current version from git."
