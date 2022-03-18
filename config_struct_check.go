@@ -38,7 +38,7 @@ func checkStruct(v *reflect.Value) error {
 			if err := checkStruct(&c); err != nil {
 				return err
 			}
-		} else if v.Type().Field(i).IsExported() {
+		} else {
 
 			// Get tags
 			requiredTag = false
@@ -53,48 +53,51 @@ func checkStruct(v *reflect.Value) error {
 			}
 
 			if defaultTag || requiredTag {
-
-				// Get the type family and number of bits
-				typeInfo := typeRegex.FindStringSubmatch(v.Field(i).Kind().String())
-				if typeInfo[2] == "" {
-					bits = 0
+				if v.Type().Field(i).IsExported() {
+					// Get the type family and number of bits
+					typeInfo := typeRegex.FindStringSubmatch(v.Field(i).Kind().String())
+					if typeInfo[2] == "" {
+						bits = 0
+					} else {
+						bits, _ = strconv.Atoi(typeInfo[2])
+					}
+					switch typeInfo[1] {
+					case "int": // Integer type
+						if integer, err = strconv.ParseInt(defaultTagValue, 10, bits); err != nil { // Parse string to int
+							return err
+						}
+						if v.Field(i).Int() == 0 { // If zero
+							if requiredTag { // And required, not allowed
+								return fmt.Errorf("Integer field %s is marked as required but has zero value.", v.Type().Field(i).Name)
+							}
+							if defaultTag { // If default value exists, set it
+								v.Field(i).SetInt(int64(integer))
+							}
+						}
+					case "float": // Float type
+						if floating, err = strconv.ParseFloat(defaultTagValue, bits); err != nil { // Parse string to float
+							return err
+						}
+						if v.Field(i).Float() == 0 { // If zero
+							if requiredTag { // And required, not allowd
+								return fmt.Errorf("Float field %s is marked as required but has zero value.", v.Type().Field(i).Name)
+							}
+							if defaultTag { // If default value exists, set it
+								v.Field(i).SetFloat(floating)
+							}
+						}
+					case "string": // String type
+						if v.Field(i).Len() == 0 { // If zero length
+							if requiredTag { // And requred, not allowed
+								return fmt.Errorf("required value missing in string field %s", v.Type().Field(i).Name)
+							}
+							if defaultTag { // If default value exists, set it
+								v.Field(i).SetString(defaultTagValue)
+							}
+						}
+					}
 				} else {
-					bits, _ = strconv.Atoi(typeInfo[2])
-				}
-				switch typeInfo[1] {
-				case "int": // Integer type
-					if integer, err = strconv.ParseInt(defaultTagValue, 10, bits); err != nil { // Parse string to int
-						return err
-					}
-					if v.Field(i).Int() == 0 { // If zero
-						if requiredTag { // And required, not allowed
-							return fmt.Errorf("Integer field %s is marked as required but has zero value.", v.Type().Field(i).Name)
-						}
-						if defaultTag { // If default value exists, set it
-							v.Field(i).SetInt(int64(integer))
-						}
-					}
-				case "float": // Float type
-					if floating, err = strconv.ParseFloat(defaultTagValue, bits); err != nil { // Parse string to float
-						return err
-					}
-					if v.Field(i).Float() == 0 { // If zero
-						if requiredTag { // And required, not allowd
-							return fmt.Errorf("Float field %s is marked as required but has zero value.", v.Type().Field(i).Name)
-						}
-						if defaultTag { // If default value exists, set it
-							v.Field(i).SetFloat(floating)
-						}
-					}
-				case "string": // String type
-					if v.Field(i).Len() == 0 { // If zero length
-						if requiredTag { // And requred, not allowed
-							return fmt.Errorf("required value missing in string field %s", v.Type().Field(i).Name)
-						}
-						if defaultTag { // If default value exists, set it
-							v.Field(i).SetString(defaultTagValue)
-						}
-					}
+					fmt.Printf("Warning: default or required tag detected on unexported field %s", v.Type().Field(i).Name)
 				}
 			}
 		}
