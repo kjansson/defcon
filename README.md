@@ -8,4 +8,36 @@ Allowed tags are `default:"<value>"` and `required:"<true|TRUE>"`. The default t
 
 ## Example
 
-To be done
+```
+package main
+
+import (
+	"fmt"
+
+	defcon "github.com/kjansson/defcon"
+)
+
+type config struct {
+	Address  string `default:"localhost"`
+	Port     int    `default:"8080"`
+	User     string `required:"true"`
+	Password string `required:"true"`
+}
+
+func main() {
+
+	configuration := config{}
+	// Fails if these are empty
+	configuration.User = "user"
+	configuration.Password = "qwerty"
+
+	err := defcon.CheckConfigStruct(&configuration)
+	if err != nil {
+		fmt.Println("Parsing error:", err)
+	}
+
+	fmt.Println(configuration.Address) // Output: "localhost"
+	fmt.Println(configuration.Port)    // Output: "8080"
+
+}
+```

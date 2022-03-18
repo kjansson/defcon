@@ -115,7 +115,7 @@ func TestString(t *testing.T) {
 	}
 }
 
-func TestMissingString(t *testing.T) {
+func TestRequiredString(t *testing.T) {
 
 	type testStruct struct {
 		Val string `required:"true"`
