@@ -135,14 +135,14 @@ func TestRequiredInteger(t *testing.T) {
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
 	if err == nil {
-		t.Errorf("Type default required tagged field was not detected.")
+		t.Errorf("Required field was not required.")
 	}
 }
 
 func TestRequiredAndDefault(t *testing.T) {
 
 	type testStruct struct {
-		Val int `required:"true", default:"123"`
+		Val int `required:"true" default:"123"`
 	}
 	test := testStruct{}
 	err := CheckConfigStruct(&test)

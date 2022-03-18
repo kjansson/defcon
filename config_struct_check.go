@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-// CheckConfigStruct accepts any struct (supports nested structs) and will check all values and their tags.
+// CheckConfigStruct accepts any struct (supports nested structs) and will check all exported values and their tags.
 // The supported tags are "default" and "required". Supported types to tag are all ints, floats and string.
 // It will modify all struct fields where the tag `default:"<value>"` is present and a valid value is given.
 //
@@ -38,13 +38,19 @@ func checkStruct(v *reflect.Value) error {
 			if err := checkStruct(&c); err != nil {
 				return err
 			}
-		} else {
+		} else if v.Type().Field(i).IsExported() {
+
 			// Get tags
 			requiredTag = false
 			if requiredTagValue, _ = v.Type().Field(i).Tag.Lookup("required"); requiredTagValue == "true" || requiredTagValue == "TRUE" {
+				fmt.Println("REQ")
 				requiredTag = true
 			}
+
 			defaultTagValue, defaultTag = v.Type().Field(i).Tag.Lookup("default")
+			if defaultTag {
+				fmt.Println("DEF")
+			}
 
 			if defaultTag && requiredTag { // Both default and required is not allowed
 				return fmt.Errorf("Having both default and required tags present in field %s is not allowed.", v.Type().Field(i).Name)
