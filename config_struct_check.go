@@ -43,14 +43,10 @@ func checkStruct(v *reflect.Value) error {
 			// Get tags
 			requiredTag = false
 			if requiredTagValue, _ = v.Type().Field(i).Tag.Lookup("required"); requiredTagValue == "true" || requiredTagValue == "TRUE" {
-				fmt.Println("REQ")
 				requiredTag = true
 			}
 
 			defaultTagValue, defaultTag = v.Type().Field(i).Tag.Lookup("default")
-			if defaultTag {
-				fmt.Println("DEF")
-			}
 
 			if defaultTag && requiredTag { // Both default and required is not allowed
 				return fmt.Errorf("Having both default and required tags present in field %s is not allowed.", v.Type().Field(i).Name)
