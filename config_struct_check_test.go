@@ -123,7 +123,7 @@ func TestMissingString(t *testing.T) {
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
 	if err == nil {
-		t.Errorf("Required value was not required.")
+		t.Errorf("Required field was not required.")
 	}
 }
 
@@ -135,6 +135,42 @@ func TestRequiredInteger(t *testing.T) {
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
 	if err == nil {
-		t.Errorf("Type default required tagged value was not detected.")
+		t.Errorf("Type default required tagged field was not detected.")
+	}
+}
+
+func TestRequiredAndDefault(t *testing.T) {
+
+	type testStruct struct {
+		Val int `required:"true", default:"123"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Default and required tagged field was not detected.")
+	}
+}
+
+func TestInvalidNumerical(t *testing.T) {
+
+	type testStruct struct {
+		Val int `default:"somevalue"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Invalid numerical tag value was not detected.")
+	}
+}
+
+func TestOverflowingNumerical(t *testing.T) {
+
+	type testStruct struct {
+		Val int8 `default:"555"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Overflowing numerical tag value was not detected. %s", err)
 	}
 }
