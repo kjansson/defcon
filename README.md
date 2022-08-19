@@ -9,6 +9,9 @@ The default tag will modify the struct field with the given value, if the origin
 The required tag will throw an error if the fields value is the type default mentioned earlier.  
 The requires tag will throw an error if any of the given fields are missing values when the tagged field is in use.
 
+## Documentation
+https://pkg.go.dev/github.com/kjansson/defcon
+
 ## Example
 
 ```
