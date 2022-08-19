@@ -10,13 +10,14 @@ import (
 )
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will check all exported values and their tags.
-// The supported tags are "default" and "required". Supported types to tag are all ints, floats and string.
+// The supported tags are "default", "required" and "requires". Supported types to tag are all ints, floats and string.
 // It will modify all struct fields where the tag `default:"<value>"` is present and a valid value is given.
 //
 // It will return an error if one or more of the following conditions are met.
 // A field is tagged with `required:"true"` and A: is a string but the value is empty or B: is a numerical type but the value is zero.
 // A field is tagged with `default:"<value>"` but the value is not valid for the type of the field
 // A field is tagged with both `default:"<value>"` and `required:"true"`
+// A field is tagged with `requires:"<field1, field2, ...>"` is in use, and the value of any the given fields is A: is a string but the value is empty or B: is a numerical type but the value is zero.
 func CheckConfigStruct(config interface{}) error {
 	c := reflect.ValueOf(config).Elem()
 	return checkStruct(&c)
