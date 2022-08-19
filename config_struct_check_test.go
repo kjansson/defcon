@@ -175,15 +175,44 @@ func TestOverflowingNumerical(t *testing.T) {
 	}
 }
 
-func TestRequiredBy(t *testing.T) {
+func TestRequires(t *testing.T) {
 
 	type testStruct struct {
-		Val1 string `requiredby:"Val1"`
-		Val2 string `requiredby:"Val1"`
+		Val1 string `requires:"Val2"`
+		Val2 string
+		Val3 string
+	}
+	test := testStruct{Val1: "set"}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Field required by other not detected. %s", err)
+	}
+}
+
+func TestRequiresMultiple(t *testing.T) {
+
+	type testStruct struct {
+		Val1 string `requires:"Val2, Val3"`
+		Val2 string
+		Val3 string
+	}
+	test := testStruct{Val1: "set"}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Fields required by other not detected. %s", err)
+	}
+}
+
+func TestRequiresVarSyntax(t *testing.T) {
+
+	type testStruct struct {
+		Val1 string `requires:"Val**2"`
+		Val2 string
+		Val3 string
 	}
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
 	if err == nil {
-		t.Errorf("Overflowing numerical tag value was not detected. %s", err)
+		t.Errorf("Illegal characters in field name not detected. %s", err)
 	}
 }

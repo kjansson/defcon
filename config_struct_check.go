@@ -6,19 +6,8 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 )
-
-type reqqedby struct {
-	field string
-	set   bool
-}
-
-type reqBy struct {
-	// field string
-	needs []string
-	has   []string
-	//
-}
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will check all exported values and their tags.
 // The supported tags are "default" and "required". Supported types to tag are all ints, floats and string.
@@ -33,22 +22,26 @@ func CheckConfigStruct(config interface{}) error {
 	return checkStruct(&c)
 }
 
+func existsIn(subject []string, searchValue string) bool {
+	for _, value := range subject {
+		if value == searchValue {
+			return true
+		}
+	}
+	return false
+}
+
 func checkStruct(v *reflect.Value) error {
 
 	var bits int
 	var err error
-	var requiredTag, defaultTag, requiredByTag bool
-	var defaultTagValue, requiredTagValue, requiredByValue string
+	var requiredTag, defaultTag, requiresTag bool
+	var defaultTagValue, requiredTagValue, requiresValue string
 	var integer int64
 	var floating float64
 
-	reqByVarMap := make(map[string]map[string]bool)
-
-	// so loop through as normal
-	// 	if you come upon a required by tag
-	// 		add to map as true if set
-
-	// by the end, check if all is true? or fail emmediatemont if not set?
+	requiresMap := make(map[string][]string)
+	setFields := []string{}
 
 	typeRegex, _ := regexp.Compile("^([a-zA-Z]+)([0-9]*)") // Extract type family (int, float, etc) and the number of bits for the type
 
@@ -59,8 +52,6 @@ func checkStruct(v *reflect.Value) error {
 				return err
 			}
 		} else {
-
-			tagged := false
 			// Get tags
 			requiredTag = false
 			if requiredTagValue, _ = v.Type().Field(i).Tag.Lookup("required"); requiredTagValue == "true" || requiredTagValue == "TRUE" {
@@ -69,97 +60,104 @@ func checkStruct(v *reflect.Value) error {
 
 			defaultTagValue, defaultTag = v.Type().Field(i).Tag.Lookup("default")
 
-			requiredByValue, requiredByTag = v.Type().Field(i).Tag.Lookup("requiredby")
-			if requiredByTag {
-				reqByVarMap[requiredByValue][v.Type().Field(i).Name] = false
+			requiresValue, requiresTag = v.Type().Field(i).Tag.Lookup("requires")
+			if requiresTag {
+				requires := strings.Split(requiresValue, ",")
+				for _, r := range requires {
+					fieldName := strings.TrimSpace(r)
+					match, err := regexp.MatchString("^[a-zA-Z][a-zA-Z0-9_-]+$", fieldName)
+					if err != nil {
+						return fmt.Errorf("Error while evaluating requires value with regex: %s", err)
+					}
+					if !match {
+						return fmt.Errorf("Field name %s required by %s does not seem to have a valid name", fieldName, v.Type().Field(i).Name)
+					} else {
+						requiresMap[v.Type().Field(i).Name] = append(requiresMap[v.Type().Field(i).Name], fieldName)
+					}
+				}
 			}
-
-			tagged = defaultTag || requiredTag || requiredByTag
 
 			if defaultTag && requiredTag { // Both default and required is not allowed
 				return fmt.Errorf("Having both default and required tags present in field %s is not allowed.", v.Type().Field(i).Name)
 			}
 
-			if tagged {
-				if v.Type().Field(i).IsExported() {
-					// Get the type family and number of bits
-					typeInfo := typeRegex.FindStringSubmatch(v.Field(i).Kind().String())
-					if typeInfo[2] == "" {
-						bits = 0
-					} else {
-						bits, _ = strconv.Atoi(typeInfo[2])
-					}
-					switch typeInfo[1] {
-					case "int": // Integer type
-						if integer, err = strconv.ParseInt(defaultTagValue, 10, bits); err != nil { // Parse string to int
-							return err
-						}
-						if v.Field(i).Int() == 0 { // If zero
-							if requiredTag { // And required, not allowed
-								return fmt.Errorf("Integer field %s is marked as required but has zero value.", v.Type().Field(i).Name)
-							}
-							if defaultTag { // If default value exists, set it
-								v.Field(i).SetInt(int64(integer))
-							}
-							// This field requires other fields but is not set, so delete it from requiredby map
-							if _, ok := reqByVarMap[v.Type().Field(i).Name]; ok {
-								delete(reqByVarMap, v.Type().Field(i).Name)
-							}
-						} else {
-							if requiredByTag {
-								reqByVarMap[requiredByValue][v.Type().Field(i).Name] = true
-							}
-						}
-					case "float": // Float type
-						if floating, err = strconv.ParseFloat(defaultTagValue, bits); err != nil { // Parse string to float
-							return err
-						}
-						if v.Field(i).Float() == 0 { // If zero
-							if requiredTag { // And required, not allowd
-								return fmt.Errorf("Float field %s is marked as required but has zero value.", v.Type().Field(i).Name)
-							}
-							if defaultTag { // If default value exists, set it
-								v.Field(i).SetFloat(floating)
-							}
-							if _, ok := reqByVarMap[v.Type().Field(i).Name]; ok {
-								delete(reqByVarMap, v.Type().Field(i).Name)
-							}
-							if _, ok := reqByVarMap[v.Type().Field(i).Name]; ok {
-								delete(reqByVarMap, v.Type().Field(i).Name)
-							}
-						} else {
-							if requiredByTag {
-								reqByVarMap[requiredByValue][v.Type().Field(i).Name] = true
-							}
-						}
-					case "string": // String type
-						if v.Field(i).Len() == 0 { // If zero length
-							if requiredTag { // And requred, not allowed
-								return fmt.Errorf("required value missing in string field %s", v.Type().Field(i).Name)
-							}
-							if defaultTag { // If default value exists, set it
-								v.Field(i).SetString(defaultTagValue)
-							}
-							if _, ok := reqByVarMap[v.Type().Field(i).Name]; ok {
-								delete(reqByVarMap, v.Type().Field(i).Name)
-							}
-						} else {
-							if requiredByTag {
-								reqByVarMap[requiredByValue][v.Type().Field(i).Name] = true
-							}
-						}
-					}
+			if v.Type().Field(i).IsExported() {
+				// Get the type family and number of bits
+				typeInfo := typeRegex.FindStringSubmatch(v.Field(i).Kind().String())
+				if typeInfo[2] == "" {
+					bits = 0
 				} else {
-					fmt.Printf("Warning: default or required tag detected on unexported field %s", v.Type().Field(i).Name)
+					bits, _ = strconv.Atoi(typeInfo[2])
 				}
+				switch typeInfo[1] {
+				case "int": // Integer type
+					if integer, err = strconv.ParseInt(defaultTagValue, 10, bits); err != nil { // Parse string to int
+						return err
+					}
+					if v.Field(i).Int() == 0 { // If zero
+						if requiredTag { // And required, not allowed
+							return fmt.Errorf("Integer field %s is marked as required but has zero value.", v.Type().Field(i).Name)
+						}
+						if defaultTag { // If default value exists, set it
+							v.Field(i).SetInt(int64(integer))
+							setFields = append(setFields, v.Type().Field(i).Name)
+						}
+						if _, ok := requiresMap[v.Type().Field(i).Name]; ok {
+							// If field requires other fields but is not itself set, we should ignore the requirements
+							delete(requiresMap, v.Type().Field(i).Name)
+						}
+					} else {
+						// This field has a value, save as set
+						setFields = append(setFields, v.Type().Field(i).Name)
+					}
+				case "float": // Float type
+					if floating, err = strconv.ParseFloat(defaultTagValue, bits); err != nil { // Parse string to float
+						return err
+					}
+					if v.Field(i).Float() == 0 { // If zero
+						if requiredTag { // And required, not allowd
+							return fmt.Errorf("Float field %s is marked as required but has zero value.", v.Type().Field(i).Name)
+						}
+						if defaultTag { // If default value exists, set it
+							v.Field(i).SetFloat(floating)
+							setFields = append(setFields, v.Type().Field(i).Name)
+						}
+						if _, ok := requiresMap[v.Type().Field(i).Name]; ok {
+							// If field requires other fields but is not itself set, we should ignore the requirements
+							delete(requiresMap, v.Type().Field(i).Name)
+						}
+					} else {
+						// This field has a value, save as set
+						setFields = append(setFields, v.Type().Field(i).Name)
+					}
+				case "string": // String type
+					if v.Field(i).Len() == 0 { // If zero length
+						if requiredTag { // And requred, not allowed
+							return fmt.Errorf("required value missing in string field %s", v.Type().Field(i).Name)
+						}
+						if defaultTag { // If default value exists, set it
+							v.Field(i).SetString(defaultTagValue)
+							setFields = append(setFields, v.Type().Field(i).Name)
+						}
+						if _, ok := requiresMap[v.Type().Field(i).Name]; ok {
+							// If field requires other fields but is not itself set, we should ignore the requirements
+							delete(requiresMap, v.Type().Field(i).Name)
+						}
+					} else {
+						// This field has a value, save as set
+						setFields = append(setFields, v.Type().Field(i).Name)
+					}
+				}
+			} else {
+				fmt.Printf("Warning: default or required tag detected on unexported field %s", v.Type().Field(i).Name)
 			}
 		}
 	}
 
-	for parentField, fields := range reqByVarMap {
-		for field, b := range fields {
-			if !b {
-				return fmt.Errorf("Field %s is required by field %s but is not set", field, parentField)
+	for parentField, requiredFields := range requiresMap {
+		for _, requiredField := range requiredFields {
+			if !existsIn(setFields, requiredField) {
+				return fmt.Errorf("Field %s is required by field %s but is not set", requiredField, parentField)
 			}
 		}
 	}
