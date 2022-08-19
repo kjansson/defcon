@@ -174,3 +174,16 @@ func TestOverflowingNumerical(t *testing.T) {
 		t.Errorf("Overflowing numerical tag value was not detected. %s", err)
 	}
 }
+
+func TestRequiredBy(t *testing.T) {
+
+	type testStruct struct {
+		Val1 string `requiredby:"Val1"`
+		Val2 string `requiredby:"Val1"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Overflowing numerical tag value was not detected. %s", err)
+	}
+}
