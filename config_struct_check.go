@@ -75,10 +75,10 @@ func checkStruct(v *reflect.Value) error {
 					fieldName := strings.TrimSpace(r)
 					match, err := regexp.MatchString("^[a-zA-Z][a-zA-Z0-9_-]+$", fieldName)
 					if err != nil {
-						return fmt.Errorf("Error while evaluating requires value with regex: %s", err)
+						return fmt.Errorf("error while evaluating requires value with regex: %s", err)
 					}
 					if !match {
-						return fmt.Errorf("Field name %s required by %s does not seem to have a valid name", fieldName, v.Type().Field(i).Name)
+						return fmt.Errorf("field name %s required by %s does not seem to have a valid name", fieldName, v.Type().Field(i).Name)
 					} else {
 						requiresMap[v.Type().Field(i).Name] = append(requiresMap[v.Type().Field(i).Name], fieldName)
 					}
@@ -86,7 +86,7 @@ func checkStruct(v *reflect.Value) error {
 			}
 
 			if defaultTag && requiredTag { // Both default and required is not allowed
-				return fmt.Errorf("Having both default and required tags present in field %s is not allowed.", v.Type().Field(i).Name)
+				return fmt.Errorf("having both default and required tags present in field %s is not allowed", v.Type().Field(i).Name)
 			}
 
 			if v.Type().Field(i).IsExported() {
@@ -104,13 +104,12 @@ func checkStruct(v *reflect.Value) error {
 					}
 					if v.Field(i).Int() == 0 { // If zero
 						if requiredTag { // And required, not allowed
-							return fmt.Errorf("Integer field %s is marked as required but has zero value.", v.Type().Field(i).Name)
+							return fmt.Errorf("integer field %s is marked as required but has zero value", v.Type().Field(i).Name)
 						}
 						if defaultTag { // If default value exists, set it
 							v.Field(i).SetInt(int64(integer))
 							setFields = append(setFields, v.Type().Field(i).Name)
-						}
-						if _, ok := requiresMap[v.Type().Field(i).Name]; ok {
+						} else {
 							// If field requires other fields but is not itself set, we should ignore the requirements
 							delete(requiresMap, v.Type().Field(i).Name)
 						}
@@ -129,17 +128,15 @@ func checkStruct(v *reflect.Value) error {
 						if defaultTag { // If default value exists, set it
 							v.Field(i).SetFloat(floating)
 							setFields = append(setFields, v.Type().Field(i).Name)
+						} else {
+							// If field requires other fields but is not itself set, we should ignore the requirements
+							delete(requiresMap, v.Type().Field(i).Name)
 						}
-						//if _, ok := requiresMap[v.Type().Field(i).Name]; ok {
-						// If field requires other fields but is not itself set, we should ignore the requirements
-						delete(requiresMap, v.Type().Field(i).Name)
-						//}
 					} else {
 						// This field has a value, save as set
 						setFields = append(setFields, v.Type().Field(i).Name)
 					}
 				case "string": // String type
-					//test := reflect.ValueOf(v.Field(i))
 					if v.Field(i).Len() == 0 { // If zero length
 						if requiredTag { // And requred, not allowed
 							return fmt.Errorf("required value missing in string field %s", v.Type().Field(i).Name)
@@ -147,9 +144,10 @@ func checkStruct(v *reflect.Value) error {
 						if defaultTag { // If default value exists, set it
 							v.Field(i).SetString(defaultTagValue)
 							setFields = append(setFields, v.Type().Field(i).Name)
+						} else {
+							// If field requires other fields but is not itself set, we should ignore the requirements
+							delete(requiresMap, v.Type().Field(i).Name)
 						}
-						// If field requires other fields but is not itself set, we should ignore the requirements
-						delete(requiresMap, v.Type().Field(i).Name)
 					} else {
 						// This field has a value, save as set
 						setFields = append(setFields, v.Type().Field(i).Name)
