@@ -20,6 +20,11 @@ import (
 // A field is tagged with `requires:"<field1, field2, ...>"` is in use, and the value of any the given fields is A: is a string but the value is empty or B: is a numerical type but the value is zero.
 func CheckConfigStruct(config interface{}) error {
 	c := reflect.ValueOf(config).Elem()
+	// if c.CanAddr() {
+	// 	fmt.Println("STRUCT ADDRESSABLE")
+	// } else {
+	// 	fmt.Println("STRUCT NOT ADDRESSABLE")
+	// }
 	return checkStruct(&c)
 }
 
@@ -48,9 +53,11 @@ func checkStruct(v *reflect.Value) error {
 
 	for i := 0; i < v.NumField(); i++ { // Loop through fields in struct
 		if v.Field(i).Kind() == reflect.Struct { // This is a nested struct
-			c := reflect.ValueOf(v.Field(i).Interface())
-			if err := checkStruct(&c); err != nil {
-				return err
+			c := v.Field(i)
+			if c.CanSet() {
+				if err := checkStruct(&c); err != nil {
+					return err
+				}
 			}
 		} else {
 			// Get tags
@@ -117,21 +124,22 @@ func checkStruct(v *reflect.Value) error {
 					}
 					if v.Field(i).Float() == 0 { // If zero
 						if requiredTag { // And required, not allowd
-							return fmt.Errorf("Float field %s is marked as required but has zero value.", v.Type().Field(i).Name)
+							return fmt.Errorf("float field %s is marked as required but has zero value", v.Type().Field(i).Name)
 						}
 						if defaultTag { // If default value exists, set it
 							v.Field(i).SetFloat(floating)
 							setFields = append(setFields, v.Type().Field(i).Name)
 						}
-						if _, ok := requiresMap[v.Type().Field(i).Name]; ok {
-							// If field requires other fields but is not itself set, we should ignore the requirements
-							delete(requiresMap, v.Type().Field(i).Name)
-						}
+						//if _, ok := requiresMap[v.Type().Field(i).Name]; ok {
+						// If field requires other fields but is not itself set, we should ignore the requirements
+						delete(requiresMap, v.Type().Field(i).Name)
+						//}
 					} else {
 						// This field has a value, save as set
 						setFields = append(setFields, v.Type().Field(i).Name)
 					}
 				case "string": // String type
+					//test := reflect.ValueOf(v.Field(i))
 					if v.Field(i).Len() == 0 { // If zero length
 						if requiredTag { // And requred, not allowed
 							return fmt.Errorf("required value missing in string field %s", v.Type().Field(i).Name)
@@ -140,10 +148,8 @@ func checkStruct(v *reflect.Value) error {
 							v.Field(i).SetString(defaultTagValue)
 							setFields = append(setFields, v.Type().Field(i).Name)
 						}
-						if _, ok := requiresMap[v.Type().Field(i).Name]; ok {
-							// If field requires other fields but is not itself set, we should ignore the requirements
-							delete(requiresMap, v.Type().Field(i).Name)
-						}
+						// If field requires other fields but is not itself set, we should ignore the requirements
+						delete(requiresMap, v.Type().Field(i).Name)
 					} else {
 						// This field has a value, save as set
 						setFields = append(setFields, v.Type().Field(i).Name)
@@ -158,7 +164,7 @@ func checkStruct(v *reflect.Value) error {
 	for parentField, requiredFields := range requiresMap {
 		for _, requiredField := range requiredFields {
 			if !existsIn(setFields, requiredField) {
-				return fmt.Errorf("Field %s is required by field %s but is not set", requiredField, parentField)
+				return fmt.Errorf("field %s requires field %s", parentField, requiredField)
 			}
 		}
 	}

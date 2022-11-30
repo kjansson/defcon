@@ -216,3 +216,25 @@ func TestRequiresVarSyntax(t *testing.T) {
 		t.Errorf("Illegal characters in field name not detected. %s", err)
 	}
 }
+
+func TestNestedStruct(t *testing.T) {
+	type nestedTestStruct struct {
+		Val1 string `default:"testnest"`
+	}
+	type testStruct struct {
+		Val1   string `default:"test"`
+		Nested nestedTestStruct
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Nested struct not checked correctly. %s", err)
+	}
+	if test.Nested.Val1 != "testnest" {
+		t.Errorf("Nested struct default value not working.")
+	}
+	if test.Val1 != "test" {
+		t.Errorf("Nested struct default value not working.")
+	}
+}
