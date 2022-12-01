@@ -203,6 +203,23 @@ func TestRequiresMultiple(t *testing.T) {
 	}
 }
 
+func TestRequiresNestedStruct(t *testing.T) {
+
+	type nestedTestStruct struct {
+		Val1 string // Leave empty
+	}
+	type testStruct struct {
+		Val1   string `requires:"Nested"`
+		Nested nestedTestStruct
+	}
+
+	test := testStruct{Val1: "set"}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Required nested struct failed. %s", err)
+	}
+}
+
 func TestRequiresVarSyntax(t *testing.T) {
 
 	type testStruct struct {
@@ -213,7 +230,7 @@ func TestRequiresVarSyntax(t *testing.T) {
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
 	if err == nil {
-		t.Errorf("Illegal characters in field name not detected. %s", err)
+		t.Errorf("Illegal characters in field name not detected")
 	}
 }
 
@@ -236,5 +253,17 @@ func TestNestedStruct(t *testing.T) {
 	}
 	if test.Val1 != "test" {
 		t.Errorf("Nested struct default value not working.")
+	}
+}
+
+func TestUnexported(t *testing.T) {
+
+	type testStruct struct {
+		val1 string `default:"test"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Unexported field not handled correctly. %s", err)
 	}
 }
