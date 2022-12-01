@@ -32,7 +32,7 @@ func existsIn(subject []string, searchValue string) bool {
 	return false
 }
 
-func getTypeFamily(v reflect.Value) (string, int) {
+func getTypeDetails(v reflect.Value) (string, int) {
 
 	var bits int
 	typeRegex, _ := regexp.Compile("^([a-zA-Z]+)([0-9]*)") // Extract type family (int, float, etc) and the number of bits for the type
@@ -48,18 +48,18 @@ func getTypeFamily(v reflect.Value) (string, int) {
 
 func setValue(v *reflect.Value, val string) error {
 
-	family, bits := getTypeFamily(*v)
+	family, bits := getTypeDetails(*v)
 
 	switch family {
 	case "int":
-		integer, err := strconv.ParseInt(val, 10, bits)
-		if err != nil { // Parse string to int
+		integer, err := strconv.ParseInt(val, 10, bits) // Parse string to int
+		if err != nil {
 			return err
 		}
 		v.SetInt(integer)
 	case "float":
-		floating, err := strconv.ParseFloat(val, bits)
-		if err != nil { // Parse string to int
+		floating, err := strconv.ParseFloat(val, bits) // Parse string to float
+		if err != nil {
 			return err
 		}
 		v.SetFloat(floating)
@@ -86,13 +86,12 @@ func checkStruct(v *reflect.Value) error {
 		}
 
 		defaultTagValue, defaultTag = v.Type().Field(i).Tag.Lookup("default")
-
 		requiresValue, requiresTag = v.Type().Field(i).Tag.Lookup("requires")
 		if requiresTag {
 			requires := strings.Split(requiresValue, ",")
 			for _, r := range requires {
 				fieldName := strings.TrimSpace(r)
-				match, err := regexp.MatchString("^[a-zA-Z][a-zA-Z0-9_-]+$", fieldName)
+				match, err := regexp.MatchString("^[a-zA-Z][a-zA-Z0-9_-]+$", fieldName) // Check if name of field is valid
 				if err != nil {
 					return fmt.Errorf("error while evaluating requires value with regex: %s", err)
 				}
@@ -118,11 +117,6 @@ func checkStruct(v *reflect.Value) error {
 				return fmt.Errorf("field %s (struct) is marked as required but has no set fields", v.Type().Field(i).Name)
 			}
 		} else {
-
-			// if defaultTag && requiredTag { // Both default and required is not allowed
-			// 	return fmt.Errorf("having both default and required tags present in field %s is not allowed", v.Type().Field(i).Name)
-			// }
-
 			if v.Type().Field(i).IsExported() {
 				if v.Field(i).IsZero() { // If zero
 					if defaultTag { // If default value exists, set it
@@ -140,16 +134,15 @@ func checkStruct(v *reflect.Value) error {
 						return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", v.Type().Field(i).Name, v.Type().String())
 					}
 				} else {
-					// This field has a value, save as set
-					setFields = append(setFields, v.Type().Field(i).Name)
+					setFields = append(setFields, v.Type().Field(i).Name) // This field has a value, save as set
 				}
 			}
 		}
 	}
 
-	for parentField, requiredFields := range requiresMap {
+	for parentField, requiredFields := range requiresMap { // Range trough all requires
 		for _, requiredField := range requiredFields {
-			if !existsIn(setFields, requiredField) {
+			if !existsIn(setFields, requiredField) { // Check if the requires field was registered as set
 				return fmt.Errorf("field %s requires field %s which is empty/not set", parentField, requiredField)
 			}
 		}
