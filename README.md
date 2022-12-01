@@ -30,7 +30,7 @@ import (
 	defcon "github.com/kjansson/defcon"
 )
 
-type networkConfig {
+type networkConfig struct {
 	Protocol string
 }
 
@@ -48,7 +48,7 @@ func main() {
 	// Fails if these are empty
 	configuration.User = "user"
 	configuration.Password = "qwerty"
-	configuration.Network.Protocol = "HTTP"	
+	configuration.Network.Protocol = "HTTP"	// Field "Port" also requires the field "Network" which has to have set fields
 
 	err := defcon.CheckConfigStruct(&configuration)
 	if err != nil {
