@@ -14,7 +14,7 @@ The default tag will be applied first, so if a field is tagged with both default
 The required tag will return an error if the fields value is the primitive type default. If applied to a struct, the struct will be considered empty if all of its primitive type fields have their default values.
 The requires tag will return an error if any of the given fields (within the same struct) have the primitive type default or is an empty struct.  
 
-All tags will return errors on invalid tag values such as: references to non-existing fields, values that will overflow the numerical types, invalid numerical values, etc.
+Tags with invalid values such as references to non-existing fields, values that will overflow the numerical types, invalid numerical values, etc. will result in an error.
 
 ## Documentation
 https://pkg.go.dev/github.com/kjansson/defcon
@@ -39,7 +39,7 @@ type config struct {
 	Port     int    `default:"8080" requires:"Network"`
 	User     string `required:"true"`
 	Password string `required:"true"`
-	Network  networkConfig `required:"true"`
+	Network  networkConfig	// Implicitly required by field Port
 }
 
 func main() {
@@ -48,7 +48,7 @@ func main() {
 	// Fails if these are empty
 	configuration.User = "user"
 	configuration.Password = "qwerty"
-	configuration.Network.Protocol = "HTTP"	// Field "Port" also requires the field "Network" which has to have set fields
+	configuration.Network.Protocol = "HTTP"	// Field "Port" also requires the field "Network" which has to have set fields. 
 
 	err := defcon.CheckConfigStruct(&configuration)
 	if err != nil {

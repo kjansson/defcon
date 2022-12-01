@@ -1,4 +1,4 @@
-// defcon is a minimalistic library for parsing tagged config structs, automatically handling default and required values
+// defcon is a minimalistic library for parsing tagged config structs, automatically handling default values and value dependencies
 package defcon
 
 import (
@@ -11,19 +11,21 @@ import (
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will check all exported values and their tags.
 // The supported tags are "default", "required" and "requires". Supported types to tag are all ints, floats and string.
-// It will modify all struct fields where the tag `default:"<value>"` is present and a valid value is given.
-//
-// It will return an error if one or more of the following conditions are met.
-// A field is tagged with `required:"true"` and A: is a string but the value is empty or B: is a numerical type but the value is zero.
-// A field is tagged with `default:"<value>"` but the value is not valid for the type of the field
-// A field is tagged with both `default:"<value>"` and `required:"true"`
-// A field is tagged with `requires:"<field1, field2, ...>"` is in use, and the value of any the given fields is A: is a string but the value is empty or B: is a numerical type but the value is zero.
+// Struct can be tagged with "default" and referenced in "requires" tags.
+// Behaviour;
+// The default tag will modify the struct field with the given value, if the original value is the primitive type default, i.e. zero for numerical values, or zero length string.
+// The default tag will be applied first, so if a field is tagged with both default and required, the required tag will have no effect.
+// The required tag will return an error if the fields value is the primitive type default. If applied to a struct, the struct will be considered empty if all of its primitive type fields have their default values.
+// The requires tag will return an error if any of the given fields (within the same struct) have the primitive type default or is an empty struct.
+// Tags with invalid values such as references to non-existing fields, values that will overflow the numerical types, invalid numerical values, etc. will result in an error.
 func CheckConfigStruct(config interface{}) error {
+
 	c := reflect.ValueOf(config).Elem()
 	return checkStruct(&c)
 }
 
 func existsIn(subject []string, searchValue string) bool {
+
 	for _, value := range subject {
 		if value == searchValue {
 			return true
@@ -35,8 +37,7 @@ func existsIn(subject []string, searchValue string) bool {
 func getTypeDetails(v reflect.Value) (string, int) {
 
 	var bits int
-	typeRegex, _ := regexp.Compile("^([a-zA-Z]+)([0-9]*)") // Extract type family (int, float, etc) and the number of bits for the type
-	family := typeRegex.FindStringSubmatch(v.Kind().String())
+	family := regexp.MustCompile("^([a-zA-Z]+)([0-9]*)").FindStringSubmatch(v.Kind().String())
 
 	if family[2] == "" {
 		bits = 0
@@ -71,43 +72,27 @@ func setValue(v *reflect.Value, val string) error {
 
 func checkStruct(v *reflect.Value) error {
 
-	var requiredTag, defaultTag, requiresTag bool
-	var defaultTagValue, requiredTagValue, requiresValue string
-
 	requiresMap := make(map[string][]string)
 	setFields := []string{}
 
 	for i := 0; i < v.NumField(); i++ { // Loop through fields in struct
-
-		// Get tags
-		requiredTag = false
-		if requiredTagValue, _ = v.Type().Field(i).Tag.Lookup("required"); requiredTagValue == "true" || requiredTagValue == "TRUE" {
-			requiredTag = true
-		}
-
-		defaultTagValue, defaultTag = v.Type().Field(i).Tag.Lookup("default")
-		requiresValue, requiresTag = v.Type().Field(i).Tag.Lookup("requires")
+		_, requiredTag := v.Type().Field(i).Tag.Lookup("required")
+		defaultTagValue, defaultTag := v.Type().Field(i).Tag.Lookup("default")
+		requiresValue, requiresTag := v.Type().Field(i).Tag.Lookup("requires")
 		if requiresTag {
-			requires := strings.Split(requiresValue, ",")
-			for _, r := range requires {
+			for _, r := range strings.Split(requiresValue, ",") {
 				fieldName := strings.TrimSpace(r)
-				match, err := regexp.MatchString("^[a-zA-Z][a-zA-Z0-9_-]+$", fieldName) // Check if name of field is valid
-				if err != nil {
-					return fmt.Errorf("error while evaluating requires value with regex: %s", err)
-				}
+				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(fieldName) // Check if name of field is valid
 				if !match {
 					return fmt.Errorf("field name %s required by %s does not seem to have a valid name", fieldName, v.Type().Field(i).Name)
 				} else {
-					requiresMap[v.Type().Field(i).Name] = append(requiresMap[v.Type().Field(i).Name], fieldName)
+					requiresMap[v.Type().Field(i).Name] = append(requiresMap[v.Type().Field(i).Name], fieldName) // Add to requires map
 				}
 			}
 		}
 
 		if v.Field(i).Kind() == reflect.Struct { // This is a nested struct
 			c := v.Field(i)
-			if !c.IsZero() { // Store as set if struct nested struct has set fields
-				setFields = append(setFields, v.Type().Field(i).Name)
-			}
 			if c.CanSet() {
 				if err := checkStruct(&c); err != nil {
 					return err
@@ -116,6 +101,7 @@ func checkStruct(v *reflect.Value) error {
 			if c.IsZero() { // Check required after recursion if something has been set
 				return fmt.Errorf("field %s (struct) is marked as required but has no set fields", v.Type().Field(i).Name)
 			}
+			setFields = append(setFields, v.Type().Field(i).Name)
 		} else {
 			if v.Type().Field(i).IsExported() {
 				if v.Field(i).IsZero() { // If zero
@@ -127,8 +113,7 @@ func checkStruct(v *reflect.Value) error {
 						}
 						setFields = append(setFields, v.Type().Field(i).Name)
 					} else {
-						// If field requires other fields but is not itself set, we should ignore the requirements
-						delete(requiresMap, v.Type().Field(i).Name)
+						delete(requiresMap, v.Type().Field(i).Name) // If field requires other fields but is not itself set, we should ignore the requirements
 					}
 					if requiredTag { // And required, not allowed
 						return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", v.Type().Field(i).Name, v.Type().String())
@@ -147,6 +132,5 @@ func checkStruct(v *reflect.Value) error {
 			}
 		}
 	}
-
 	return nil
 }

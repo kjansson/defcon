@@ -1,7 +1,6 @@
 package defcon
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -13,10 +12,9 @@ func TestInt(t *testing.T) {
 
 	test := testStruct{}
 
-	err := CheckConfigStruct(&test)
+	_ = CheckConfigStruct(&test)
 
 	if test.Val != 127 {
-		fmt.Println(err)
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
 	}
 
@@ -30,10 +28,9 @@ func TestInt8(t *testing.T) {
 
 	test := testStruct{}
 
-	err := CheckConfigStruct(&test)
+	_ = CheckConfigStruct(&test)
 
 	if test.Val != 127 {
-		fmt.Println(err)
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
 	}
 
