@@ -32,56 +32,19 @@ func existsIn(subject []string, searchValue string) bool {
 	return false
 }
 
-func isStructEmpty(s reflect.Value) bool {
-	for i := 0; i < s.NumField(); i++ {
-		if s.Field(i).Kind() == reflect.Struct { // This is a nested struct
-			//c := s.Field(i)
-
-			return isStructEmpty(s.Field(i))
-		} else {
-			if !s.Field(i).IsZero() {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func getTypeFamily(v reflect.Value) (string, int) {
 
 	var bits int
 	typeRegex, _ := regexp.Compile("^([a-zA-Z]+)([0-9]*)") // Extract type family (int, float, etc) and the number of bits for the type
-
 	family := typeRegex.FindStringSubmatch(v.Kind().String())
+
 	if family[2] == "" {
 		bits = 0
 	} else {
 		bits, _ = strconv.Atoi(family[2])
 	}
-
 	return family[1], bits
 }
-
-// func isEmpty(v reflect.Value) bool {
-
-// 	family, _ := getTypeFamily(v)
-
-// 	switch family {
-// 	case "int":
-// 		if v.Int() == 0 { // If zero
-// 			return true
-// 		}
-// 	case "float":
-// 		if v.Float() == 0 { // If zero
-// 			return true
-// 		}
-// 	case "string":
-// 		if v.Len() == 0 { // If zero
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
 
 func setValue(v *reflect.Value, val string) error {
 
@@ -103,7 +66,6 @@ func setValue(v *reflect.Value, val string) error {
 	case "string":
 		v.SetString(val)
 	}
-
 	return nil
 }
 
@@ -147,23 +109,22 @@ func checkStruct(v *reflect.Value) error {
 			if !c.IsZero() { // Store as set if struct nested struct has set fields
 				setFields = append(setFields, v.Type().Field(i).Name)
 			}
-
 			if c.CanSet() {
 				if err := checkStruct(&c); err != nil {
 					return err
 				}
 			}
+			if c.IsZero() { // Check required after recursion if something has been set
+				return fmt.Errorf("field %s (struct) is marked as required but has no set fields", v.Type().Field(i).Name)
+			}
 		} else {
 
-			if defaultTag && requiredTag { // Both default and required is not allowed
-				return fmt.Errorf("having both default and required tags present in field %s is not allowed", v.Type().Field(i).Name)
-			}
+			// if defaultTag && requiredTag { // Both default and required is not allowed
+			// 	return fmt.Errorf("having both default and required tags present in field %s is not allowed", v.Type().Field(i).Name)
+			// }
 
 			if v.Type().Field(i).IsExported() {
 				if v.Field(i).IsZero() { // If zero
-					if requiredTag { // And required, not allowed
-						return fmt.Errorf("field %s is marked as required but has zero/empty value", v.Type().Field(i).Name)
-					}
 					if defaultTag { // If default value exists, set it
 						ptr := v.Field(i)
 						err := setValue(&ptr, defaultTagValue)
@@ -174,6 +135,9 @@ func checkStruct(v *reflect.Value) error {
 					} else {
 						// If field requires other fields but is not itself set, we should ignore the requirements
 						delete(requiresMap, v.Type().Field(i).Name)
+					}
+					if requiredTag { // And required, not allowed
+						return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", v.Type().Field(i).Name, v.Type().String())
 					}
 				} else {
 					// This field has a value, save as set
