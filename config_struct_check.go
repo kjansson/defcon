@@ -98,10 +98,12 @@ func checkStruct(v *reflect.Value) error {
 					return err
 				}
 			}
-			if c.IsZero() { // Check required after recursion if something has been set
+			if c.IsZero() && requiredTag {
 				return fmt.Errorf("field %s (struct) is marked as required but has no set fields", v.Type().Field(i).Name)
 			}
-			setFields = append(setFields, v.Type().Field(i).Name)
+			if !c.IsZero() { // Check required after recursion if something has been set
+				setFields = append(setFields, v.Type().Field(i).Name)
+			}
 		} else {
 			if v.Type().Field(i).IsExported() {
 				if v.Field(i).IsZero() { // If zero

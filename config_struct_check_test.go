@@ -203,7 +203,7 @@ func TestRequiresMultiple(t *testing.T) {
 func TestRequiresNestedStruct(t *testing.T) {
 
 	type nestedTestStruct struct {
-		Val1 string // Leave empty
+		Val1 string
 	}
 	type testStruct struct {
 		Val1   string `requires:"Nested"`
@@ -211,9 +211,10 @@ func TestRequiresNestedStruct(t *testing.T) {
 	}
 
 	test := testStruct{Val1: "set"}
+	test.Nested.Val1 = "set"
 	err := CheckConfigStruct(&test)
-	if err == nil {
-		t.Errorf("Required nested struct failed. %s", err)
+	if err != nil {
+		t.Errorf("Validating required nested struct failed: %s", err)
 	}
 }
 
