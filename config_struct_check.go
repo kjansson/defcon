@@ -9,15 +9,15 @@ import (
 	"strings"
 )
 
-// CheckConfigStruct accepts any struct (supports nested structs) and will check all exported values and their tags.
-// The supported tags are "default", "required" and "requires". Supported types to tag are all ints, floats and string.
-// Struct can be tagged with "default" and referenced in "requires" tags.
+// CheckConfigStruct accepts any struct (supports nested structs) and will inspect all exported values and their tags.
+// The package supports the tags "default", "required" and "requires". Supported types to tag are all ints, floats and string (structs support the "required" tag).
 // Behaviour;
-// The default tag will modify the struct field with the given value, if the original value is the primitive type default, i.e. zero for numerical values, or zero length string.
-// The default tag will be applied first, so if a field is tagged with both default and required, the required tag will have no effect.
-// The required tag will return an error if the fields value is the primitive type default. If applied to a struct, the struct will be considered empty if all of its primitive type fields have their default values.
-// The requires tag will return an error if any of the given fields (within the same struct) have the primitive type default or is an empty struct.
+// The "default" tag will modify the struct field with the given value, if the original value is the primitive type default, i.e. zero for numerical values, or zero length string.
+// The "required" tag will return an error if the fields value is the primitive type default. If applied to a struct, the struct will be considered empty if all of its fields have primitive type default values.
+// The "default" tag will be applied first, so if a field is tagged with both "default" and "required", the "required" tag will have no effect.
+// The "requires" tag will return an error if any of the given fields values (within the same struct) have the primitive type default or is an empty struct.
 // Tags with invalid values such as references to non-existing fields, values that will overflow the numerical types, invalid numerical values, etc. will result in an error.
+
 func CheckConfigStruct(config interface{}) error {
 
 	c := reflect.ValueOf(config).Elem()
@@ -76,10 +76,10 @@ func checkStruct(v *reflect.Value) error {
 	setFields := []string{}
 
 	for i := 0; i < v.NumField(); i++ { // Loop through fields in struct
-		_, requiredTag := v.Type().Field(i).Tag.Lookup("required")
-		defaultTagValue, defaultTag := v.Type().Field(i).Tag.Lookup("default")
-		requiresValue, requiresTag := v.Type().Field(i).Tag.Lookup("requires")
-		if requiresTag {
+		_, isRequired := v.Type().Field(i).Tag.Lookup("required")
+		defaultValue, hasDefault := v.Type().Field(i).Tag.Lookup("default")
+		requiresValue, requiresField := v.Type().Field(i).Tag.Lookup("requires")
+		if requiresField {
 			for _, r := range strings.Split(requiresValue, ",") {
 				fieldName := strings.TrimSpace(r)
 				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(fieldName) // Check if name of field is valid
@@ -98,7 +98,7 @@ func checkStruct(v *reflect.Value) error {
 					return err
 				}
 			}
-			if c.IsZero() && requiredTag {
+			if c.IsZero() && isRequired {
 				return fmt.Errorf("field %s (struct) is marked as required but has no set fields", v.Type().Field(i).Name)
 			}
 			if !c.IsZero() { // Check required after recursion if something has been set
@@ -107,9 +107,9 @@ func checkStruct(v *reflect.Value) error {
 		} else {
 			if v.Type().Field(i).IsExported() {
 				if v.Field(i).IsZero() { // If zero
-					if defaultTag { // If default value exists, set it
+					if hasDefault { // If default value exists, set it
 						ptr := v.Field(i)
-						err := setValue(&ptr, defaultTagValue)
+						err := setValue(&ptr, defaultValue)
 						if err != nil {
 							return fmt.Errorf("could not set value in field, %s", err)
 						}
@@ -117,7 +117,7 @@ func checkStruct(v *reflect.Value) error {
 					} else {
 						delete(requiresMap, v.Type().Field(i).Name) // If field requires other fields but is not itself set, we should ignore the requirements
 					}
-					if requiredTag { // And required, not allowed
+					if isRequired { // And required, not allowed
 						return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", v.Type().Field(i).Name, v.Type().String())
 					}
 				} else {
