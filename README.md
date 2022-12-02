@@ -60,3 +60,6 @@ func main() {
 
 }
 ```
+
+Try it out!  
+https://go.dev/play/p/C99z89MX8KY
