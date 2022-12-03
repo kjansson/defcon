@@ -42,7 +42,7 @@ func getTypeDetails(v reflect.Value) (string, int) {
 	if family[2] == "" {
 		bits = 0
 	} else {
-		bits, _ = strconv.Atoi(family[2])
+		bits, _ = strconv.Atoi(family[2]) // This should be safe w/o error checking since the vaule come from the reflect kind
 	}
 	return family[1], bits
 }
@@ -76,7 +76,10 @@ func checkStruct(v *reflect.Value) error {
 	setFields := []string{}
 
 	for i := 0; i < v.NumField(); i++ { // Loop through fields in struct
-		_, isRequired := v.Type().Field(i).Tag.Lookup("required")
+		requiredValue, isRequired := v.Type().Field(i).Tag.Lookup("required")
+		if requiredValue != "true" && requiredValue != "TRUE" {
+			isRequired = false
+		}
 		defaultValue, hasDefault := v.Type().Field(i).Tag.Lookup("default")
 		requiresValue, requiresField := v.Type().Field(i).Tag.Lookup("requires")
 		if requiresField {
