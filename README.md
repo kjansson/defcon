@@ -9,10 +9,10 @@ Allowed tags for primitive types are `default:"<value>"`, `required:"<true|TRUE>
 
 
 ## Behaviour
-The default tag will modify the struct field with the given value, if the original value is the primitive type default, i.e. zero for numerical values, or zero length string.
+The default tag will modify the tagged struct field with the given value, if its original value is the primitive type default, i.e. zero for numerical values, or zero length string.
 The default tag will be applied first, so if a field is tagged with both default and required, the required tag will have no effect.
-The required tag will return an error if the fields value is the primitive type default. If applied to a struct, the struct will be considered empty if all of its primitive type fields have their default values.
-The requires tag will return an error if any of the given fields (within the same struct) have the primitive type default or is an empty struct.  
+The required tag will return an error if the tagged fields value is the primitive type default. If applied to a struct, an error will be returned if the tagged struct is considered empty/unset, i.e. if all of its primitive type fields have their default values.  
+The requires tag will return an error if any of the given fields in the tag value have the primitive type default or is considered an empty struct according the the definition above.  
 
 Tags with invalid values such as references to non-existing fields, values that will overflow the numerical types, invalid numerical values, etc. will result in an error.
 
