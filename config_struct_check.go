@@ -37,6 +37,7 @@ func existsIn(subject []string, searchValue string) bool {
 func getTypeDetails(v reflect.Value) (string, int) {
 
 	var bits int
+	// Extract type family and bits from reflect type, e.g. "int32" => ["int", "32"]
 	family := regexp.MustCompile("^([a-zA-Z]+)([0-9]*)").FindStringSubmatch(v.Kind().String())
 
 	if family[2] == "" {
@@ -97,7 +98,7 @@ func checkStruct(v *reflect.Value) error {
 		if v.Field(i).Kind() == reflect.Struct { // This is a nested struct
 			c := v.Field(i)
 			if c.CanSet() {
-				if err := checkStruct(&c); err != nil {
+				if err := checkStruct(&c); err != nil { // Drill down in nested struct
 					return err
 				}
 			}
