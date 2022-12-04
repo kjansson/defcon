@@ -10,7 +10,7 @@ import (
 	"unsafe"
 )
 
-// CheckConfigStruct accepts any struct (supports nested structs) and will inspect all exported values and their tags.
+// CheckConfigStruct accepts any struct (supports nested structs) and will inspect all fields and their tags.
 // The package supports the tags "default", "required" and "requires". Supported types to tag are all ints, floats and string (structs support the "required" tag).
 // Behaviour;
 // The "default" tag will modify the struct field with the given value, if the original value is the primitive type default, i.e. zero for numerical values, or zero length string.
