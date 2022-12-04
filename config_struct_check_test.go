@@ -257,7 +257,7 @@ func TestNestedStruct(t *testing.T) {
 func TestUnexported(t *testing.T) {
 
 	type testStruct struct {
-		val1 string `default:"test"`
+		val1 string `default:"test"` // Unexported field
 	}
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
