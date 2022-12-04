@@ -4,7 +4,7 @@ Minimalistic library for parsing tagged config structs, automatically handling d
 ## Overview
 defcon is a minimalistic library that parses structs (and nested structs) and examines certain tags, allowing you to tag certain fields with default values, as required, and mark field as required, and required by other fields. It was created to ease the pain and repetative nature of validating config structs.  
 
-Currently supported types for tagging are all ints, floats and strings. Fields must be exported. Structs are supported with the required and requires tags.
+Currently supported types for tagging are all ints, floats and strings. Structs are supported with the required and requires tags.
 Allowed tags for primitive types are `default:"<value>"`, `required:"<true|TRUE>"` and `requires:"field1, field2, ..."`.  
 
 

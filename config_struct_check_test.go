@@ -264,4 +264,7 @@ func TestUnexported(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexported field not handled correctly. %s", err)
 	}
+	if test.val1 != "test" {
+		t.Errorf("Default value in unexported field not handled correctly. Should be 'test', is '%s' Error: %s", test.val1, err)
+	}
 }

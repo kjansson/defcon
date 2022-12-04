@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unsafe"
 )
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will inspect all exported values and their tags.
@@ -73,60 +74,68 @@ func setValue(v *reflect.Value, val string) error {
 
 func checkStruct(v *reflect.Value) error {
 
-	requiresMap := make(map[string][]string)
-	setFields := []string{}
+	requiresMap := make(map[string][]string) // Map containing all fields tagged as "requires" by other
+	setFields := []string{}                  // Map containing all fields with a non-empty value
+	var field reflect.Value
 
 	for i := 0; i < v.NumField(); i++ { // Loop through fields in struct
+		// Get tags
 		requiredValue, isRequired := v.Type().Field(i).Tag.Lookup("required")
 		if requiredValue != "true" && requiredValue != "TRUE" {
 			isRequired = false
 		}
 		defaultValue, hasDefault := v.Type().Field(i).Tag.Lookup("default")
 		requiresValue, requiresField := v.Type().Field(i).Tag.Lookup("requires")
+
+		if !v.Type().Field(i).IsExported() {
+			field = reflect.NewAt(v.Field(i).Type(), unsafe.Pointer(v.Field(i).UnsafeAddr())).Elem()
+		} else {
+			field = v.Field(i)
+		}
+		fieldName := v.Type().Field(i).Name
+
 		if requiresField {
-			for _, r := range strings.Split(requiresValue, ",") {
-				fieldName := strings.TrimSpace(r)
-				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(fieldName) // Check if name of field is valid
+			for _, reqVal := range strings.Split(requiresValue, ",") { // Split all field names in requires tag value
+				reqsFieldName := strings.TrimSpace(reqVal)
+				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(reqsFieldName) // Check if name of field is valid
 				if !match {
-					return fmt.Errorf("field name %s required by %s does not seem to have a valid name", fieldName, v.Type().Field(i).Name)
+					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", reqsFieldName, fieldName)
 				} else {
-					requiresMap[v.Type().Field(i).Name] = append(requiresMap[v.Type().Field(i).Name], fieldName) // Add to requires map
+					requiresMap[fieldName] = append(requiresMap[fieldName], reqsFieldName) // Add to requires map
 				}
 			}
 		}
 
-		if v.Field(i).Kind() == reflect.Struct { // This is a nested struct
-			c := v.Field(i)
-			if c.CanSet() {
-				if err := checkStruct(&c); err != nil { // Drill down in nested struct
+		if field.Kind() == reflect.Struct { // This is a nested struct
+			//c := v.Field(i)
+			if field.CanSet() {
+				if err := checkStruct(&field); err != nil { // Drill down in nested struct
 					return err
 				}
 			}
-			if c.IsZero() && isRequired {
-				return fmt.Errorf("field %s (struct) is marked as required but has no set fields", v.Type().Field(i).Name)
+			if field.IsZero() && isRequired { // Empty but required should return error
+				return fmt.Errorf("field %s (struct) is marked as required but has no fields with non-empty values", fieldName)
 			}
-			if !c.IsZero() { // Check required after recursion if something has been set
-				setFields = append(setFields, v.Type().Field(i).Name)
+			if !field.IsZero() { // Check if field is set and add it to set fields map
+				setFields = append(setFields, fieldName)
 			}
 		} else {
-			if v.Type().Field(i).IsExported() {
-				if v.Field(i).IsZero() { // If zero
-					if hasDefault { // If default value exists, set it
-						ptr := v.Field(i)
-						err := setValue(&ptr, defaultValue)
-						if err != nil {
-							return fmt.Errorf("could not set value in field, %s", err)
-						}
-						setFields = append(setFields, v.Type().Field(i).Name)
-					} else {
-						delete(requiresMap, v.Type().Field(i).Name) // If field requires other fields but is not itself set, we should ignore the requirements
+			if field.IsZero() { // If zero
+				if hasDefault { // If default value exists, set it
+					//ptr := v.Field(i)
+					err := setValue(&field, defaultValue)
+					if err != nil {
+						return fmt.Errorf("could not set value in field, %s", err)
 					}
-					if isRequired { // And required, not allowed
-						return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", v.Type().Field(i).Name, v.Type().String())
-					}
+					setFields = append(setFields, fieldName)
 				} else {
-					setFields = append(setFields, v.Type().Field(i).Name) // This field has a value, save as set
+					delete(requiresMap, fieldName) // If field requires other fields but is not itself set, we should ignore the requirements
 				}
+				if isRequired { // And required, not allowed
+					return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", fieldName, field.Type().String())
+				}
+			} else {
+				setFields = append(setFields, fieldName) // This field has a value, save as set
 			}
 		}
 	}
