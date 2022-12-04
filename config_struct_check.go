@@ -1,4 +1,4 @@
-// defcon is a minimalistic library for parsing tagged config structs, automatically handling default values and value dependencies
+// defcon is a minimalistic library for parsing tagged config structs, automatically handling required/default values and field dependencies
 package defcon
 
 import (
@@ -25,6 +25,7 @@ func CheckConfigStruct(config interface{}) error {
 	return checkStruct(&c)
 }
 
+// Finds a string value in an array of strings
 func existsIn(subject []string, searchValue string) bool {
 
 	for _, value := range subject {
@@ -35,6 +36,7 @@ func existsIn(subject []string, searchValue string) bool {
 	return false
 }
 
+// Get reflection type and returns its type family and number of bits
 func getTypeDetails(v reflect.Value) (string, int) {
 
 	var bits int
@@ -49,6 +51,7 @@ func getTypeDetails(v reflect.Value) (string, int) {
 	return family[1], bits
 }
 
+// Sets a value
 func setValue(v *reflect.Value, val string) error {
 
 	family, bits := getTypeDetails(*v) // Get type family and number of bits if applicable
@@ -127,8 +130,6 @@ func checkStruct(v *reflect.Value) error {
 						return fmt.Errorf("could not set value in field, %s", err)
 					}
 					setFields = append(setFields, fieldName)
-				} else {
-					delete(requiresMap, fieldName) // If field requires other fields but is not itself set, we should ignore the requirements
 				}
 				if isRequired { // And required, not allowed
 					return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", fieldName, field.Type().String())
@@ -141,6 +142,9 @@ func checkStruct(v *reflect.Value) error {
 
 	for parentField, requiredFields := range requiresMap { // Range trough all requires
 		for _, requiredField := range requiredFields {
+			if !existsIn(setFields, parentField) {
+				return fmt.Errorf("field %s requires field %s but is itself empty/not set", requiredField, parentField)
+			}
 			if !existsIn(setFields, requiredField) { // Check if the requires field was registered as set
 				return fmt.Errorf("field %s requires field %s which is empty/not set", parentField, requiredField)
 			}

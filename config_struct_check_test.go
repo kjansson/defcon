@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+// Test default values for default int
 func TestInt(t *testing.T) {
 
 	type testStruct struct {
@@ -20,6 +21,7 @@ func TestInt(t *testing.T) {
 
 }
 
+// Test default values for int8
 func TestInt8(t *testing.T) {
 
 	type testStruct struct {
@@ -36,6 +38,7 @@ func TestInt8(t *testing.T) {
 
 }
 
+// Test default values for int16
 func TestInt16(t *testing.T) {
 
 	type testStruct struct {
@@ -52,6 +55,7 @@ func TestInt16(t *testing.T) {
 
 }
 
+// Test default values for int32
 func TestInt32(t *testing.T) {
 
 	type testStruct struct {
@@ -64,6 +68,7 @@ func TestInt32(t *testing.T) {
 	}
 }
 
+// Test default values for int64
 func TestInt64(t *testing.T) {
 
 	type testStruct struct {
@@ -76,6 +81,7 @@ func TestInt64(t *testing.T) {
 	}
 }
 
+// Test default values for float32
 func TestFloat32(t *testing.T) {
 
 	type testStruct struct {
@@ -88,6 +94,7 @@ func TestFloat32(t *testing.T) {
 	}
 }
 
+// Test default values for float64
 func TestFloat64(t *testing.T) {
 
 	type testStruct struct {
@@ -100,6 +107,7 @@ func TestFloat64(t *testing.T) {
 	}
 }
 
+// Test default values for string
 func TestString(t *testing.T) {
 
 	type testStruct struct {
@@ -112,6 +120,7 @@ func TestString(t *testing.T) {
 	}
 }
 
+// Test required string
 func TestRequiredString(t *testing.T) {
 
 	type testStruct struct {
@@ -120,10 +129,11 @@ func TestRequiredString(t *testing.T) {
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
 	if err == nil {
-		t.Errorf("Required field was not required.")
+		t.Errorf("Required field was not required: %s", err)
 	}
 }
 
+// Test required int
 func TestRequiredInteger(t *testing.T) {
 
 	type testStruct struct {
@@ -132,22 +142,11 @@ func TestRequiredInteger(t *testing.T) {
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
 	if err == nil {
-		t.Errorf("Required field was not required.")
+		t.Errorf("Required field was not required: %s", err)
 	}
 }
 
-func TestRequiredAndDefault(t *testing.T) {
-
-	type testStruct struct {
-		Val int `required:"true" default:"123"`
-	}
-	test := testStruct{}
-	err := CheckConfigStruct(&test)
-	if err == nil {
-		t.Errorf("Default and required tagged field was not detected.")
-	}
-}
-
+// Test detection of setting an invalid numerical value in int field
 func TestInvalidNumerical(t *testing.T) {
 
 	type testStruct struct {
@@ -156,10 +155,11 @@ func TestInvalidNumerical(t *testing.T) {
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
 	if err == nil {
-		t.Errorf("Invalid numerical tag value was not detected.")
+		t.Errorf("Invalid numerical tag value was not detected: %s", err)
 	}
 }
 
+// Test detection of setting a numerical value too big for its type
 func TestOverflowingNumerical(t *testing.T) {
 
 	type testStruct struct {
@@ -172,6 +172,7 @@ func TestOverflowingNumerical(t *testing.T) {
 	}
 }
 
+// Test detection of field requiring other field that is empty
 func TestRequires(t *testing.T) {
 
 	type testStruct struct {
@@ -186,6 +187,7 @@ func TestRequires(t *testing.T) {
 	}
 }
 
+// Test detection of field requiring multiple other fields that are empty
 func TestRequiresMultiple(t *testing.T) {
 
 	type testStruct struct {
@@ -200,24 +202,33 @@ func TestRequiresMultiple(t *testing.T) {
 	}
 }
 
+// test field requiring other field that is struct
 func TestRequiresNestedStruct(t *testing.T) {
 
 	type nestedTestStruct struct {
-		Val1 string
+		NVal1 string
 	}
 	type testStruct struct {
 		Val1   string `requires:"Nested"`
 		Nested nestedTestStruct
 	}
 
-	test := testStruct{Val1: "set"}
-	test.Nested.Val1 = "set"
+	// First, test empty value in field that requires other field. This should result in an error.
+	test := testStruct{}
 	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Validating required empty struct failed.")
+	}
+	// Second, test with set values, this should work
+	test.Val1 = "set"
+	test.Nested.NVal1 = "set"
+	err = CheckConfigStruct(&test)
 	if err != nil {
-		t.Errorf("Validating required nested struct failed: %s", err)
+		t.Errorf("Validating required nested struct failed.")
 	}
 }
 
+// Test requires with a invalid field name, should return error
 func TestRequiresVarSyntax(t *testing.T) {
 
 	type testStruct struct {
@@ -228,10 +239,11 @@ func TestRequiresVarSyntax(t *testing.T) {
 	test := testStruct{}
 	err := CheckConfigStruct(&test)
 	if err == nil {
-		t.Errorf("Illegal characters in field name not detected")
+		t.Errorf("Illegal characters in field name not detected: %s", err)
 	}
 }
 
+// Test nested structs
 func TestNestedStruct(t *testing.T) {
 	type nestedTestStruct struct {
 		Val1 string `default:"testnest"`
@@ -254,6 +266,7 @@ func TestNestedStruct(t *testing.T) {
 	}
 }
 
+// Test unexported field, with default value
 func TestUnexported(t *testing.T) {
 
 	type testStruct struct {
