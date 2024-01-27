@@ -11,7 +11,7 @@ import (
 )
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will inspect all fields and their tags.
-// The package supports the tags "default", "required" and "requires". Supported types to tag are all ints, floats and string (structs support the "required" tag).
+// The package supports the tags "default", "required" and "requires". Supported types to tag are all ints, floats and string and slices of these types (structs support the "required" tag).
 // Behaviour;
 // The "default" tag will modify the struct field with the tag value, if the original value is the primitive type default, i.e. zero for numerical values, or zero length string.
 // The "required" tag will return an error if the fields value is the primitive type default. If applied to a struct, the struct will be considered empty if all of its fields have primitive type default values.
