@@ -72,6 +72,17 @@ func setValue(v *reflect.Value, val string) error {
 		v.SetFloat(floating)
 	case "string":
 		v.SetString(val)
+	case "slice":
+		values := strings.Split(regexp.MustCompile("^{(.*)}").FindStringSubmatch(val)[1], ",")
+
+		us := make([]string, 0)    // Create a slice of strings
+		u := &us                   // Create a pointer to the slice
+		uv := reflect.ValueOf(u)   // Get the reflect value of the pointer
+		for _, x := range values { // Loop through all values
+			y := reflect.ValueOf(strings.TrimSpace(x))  // Get the reflect value of the value
+			uv.Elem().Set(reflect.Append(uv.Elem(), y)) // Append the value to the slice
+		}
+		v.Set(uv.Elem()) // Set the value of the reflect value to the slice
 	}
 	return nil
 }

@@ -281,3 +281,22 @@ func TestUnexported(t *testing.T) {
 		t.Errorf("Default value in unexported field not handled correctly. Should be 'test', is '%s' Error: %s", test.val1, err)
 	}
 }
+
+func TestStringArray(t *testing.T) {
+
+	type testStruct struct {
+		arr1 []string `default:"{foo, bar}"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Default array value not handled correctly. %s", err)
+	}
+	if test.arr1[0] != "foo" {
+		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%s'", test.arr1[0])
+	}
+	if test.arr1[1] != "bar" {
+		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%s'", test.arr1[1])
+	}
+}
