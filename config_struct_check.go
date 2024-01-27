@@ -51,6 +51,22 @@ func getTypeDetails(v reflect.Value) (string, int) {
 	return family[1], bits
 }
 
+// Get reflection type and returns its type family and number of bits
+func getElementTypeDetails(v reflect.Value) (string, int) {
+
+	var bits int
+	// Extract type family and bits (if any) from reflect type, e.g. "int32" => ["int", "32"]
+	e := v.Type().Elem()
+	family := regexp.MustCompile("^([a-zA-Z]+)([0-9]*)").FindStringSubmatch(e.Kind().String())
+
+	if family[2] == "" {
+		bits = 0
+	} else {
+		bits, _ = strconv.Atoi(family[2]) // This should be safe w/o error checking since the vaule come from the reflect kind
+	}
+	return family[1], bits
+}
+
 // Sets a value
 func setValue(v *reflect.Value, val string) error {
 
@@ -73,16 +89,103 @@ func setValue(v *reflect.Value, val string) error {
 	case "string":
 		v.SetString(val)
 	case "slice":
-		values := strings.Split(regexp.MustCompile("^{(.*)}").FindStringSubmatch(val)[1], ",")
-
-		us := make([]string, 0)    // Create a slice of strings
-		u := &us                   // Create a pointer to the slice
-		uv := reflect.ValueOf(u)   // Get the reflect value of the pointer
-		for _, x := range values { // Loop through all values
-			y := reflect.ValueOf(strings.TrimSpace(x))  // Get the reflect value of the value
-			uv.Elem().Set(reflect.Append(uv.Elem(), y)) // Append the value to the slice
+		eType, bits := getElementTypeDetails(*v)
+		var uv = reflect.Value{}
+		if eType == "int" {
+			values := strings.Split(regexp.MustCompile("^{(.*)}").FindStringSubmatch(val)[1], ",")
+			switch bits {
+			case 8:
+				us := make([]int8, 0)   // Create a slice of strings
+				u := &us                // Create a pointer to the slice
+				uv = reflect.ValueOf(u) // Get the reflect value of the pointer
+			case 16:
+				us := make([]int16, 0)
+				u := &us
+				uv = reflect.ValueOf(u)
+			case 32:
+				us := make([]int32, 0)
+				u := &us
+				uv = reflect.ValueOf(u)
+			case 64:
+				us := make([]int64, 0)
+				u := &us
+				uv = reflect.ValueOf(u)
+			default:
+				us := make([]int, 0)
+				u := &us
+				uv = reflect.ValueOf(u)
+			}
+			for _, x := range values { // Loop through all values
+				numVal, err := strconv.ParseInt(strings.TrimSpace(x), 10, bits) // Parse string to int
+				if err != nil {
+					return err
+				}
+				switch bits {
+				case 8:
+					y := reflect.ValueOf(int8(numVal)) // Get the reflect value of the value
+					uv.Elem().Set(reflect.Append(uv.Elem(), y))
+				case 16:
+					y := reflect.ValueOf(int16(numVal))
+					uv.Elem().Set(reflect.Append(uv.Elem(), y))
+				case 32:
+					y := reflect.ValueOf(int32(numVal))
+					uv.Elem().Set(reflect.Append(uv.Elem(), y))
+				case 64:
+					y := reflect.ValueOf(int64(numVal))
+					uv.Elem().Set(reflect.Append(uv.Elem(), y))
+				default:
+					y := reflect.ValueOf(int(numVal))
+					uv.Elem().Set(reflect.Append(uv.Elem(), y))
+				}
+			}
+			v.Set(uv.Elem()) // Set the value of the reflect value to the slice
+		} else if eType == "float" {
+			values := strings.Split(regexp.MustCompile("^{(.*)}").FindStringSubmatch(val)[1], ",")
+			switch bits {
+			case 32:
+				us := make([]float32, 0) // Create a slice of strings
+				u := &us                 // Create a pointer to the slice
+				uv = reflect.ValueOf(u)  // Get the reflect value of the pointer
+			case 64:
+				us := make([]float64, 0)
+				u := &us
+				uv = reflect.ValueOf(u)
+			default:
+				us := make([]float64, 0)
+				u := &us
+				uv = reflect.ValueOf(u)
+			}
+			for _, x := range values { // Loop through all values
+				numVal, err := strconv.ParseFloat(strings.TrimSpace(x), bits) // Parse string to int
+				if err != nil {
+					return err
+				}
+				switch bits {
+				case 32:
+					y := reflect.ValueOf(float32(numVal)) // Get the reflect value of the value
+					uv.Elem().Set(reflect.Append(uv.Elem(), y))
+				case 64:
+					y := reflect.ValueOf(float64(numVal))
+					uv.Elem().Set(reflect.Append(uv.Elem(), y))
+				default:
+					y := reflect.ValueOf(float64(numVal))
+					uv.Elem().Set(reflect.Append(uv.Elem(), y))
+				}
+			}
+			v.Set(uv.Elem()) // Set the value of the reflect value to the slice
+		} else if eType == "string" {
+			values := strings.Split(regexp.MustCompile("^{(.*)}").FindStringSubmatch(val)[1], ",")
+			us := make([]string, 0)    // Create a slice of strings
+			u := &us                   // Create a pointer to the slice
+			uv := reflect.ValueOf(u)   // Get the reflect value of the pointer
+			for _, x := range values { // Loop through all values
+				y := reflect.ValueOf(strings.TrimSpace(x))  // Get the reflect value of the value
+				uv.Elem().Set(reflect.Append(uv.Elem(), y)) // Append the value to the slice
+			}
+			v.Set(uv.Elem()) // Set the value of the reflect value to the slice
+		} else {
+			return fmt.Errorf("slice type %s is not supported", eType)
 		}
-		v.Set(uv.Elem()) // Set the value of the reflect value to the slice
 	}
 	return nil
 }

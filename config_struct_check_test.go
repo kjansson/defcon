@@ -300,3 +300,145 @@ func TestStringArray(t *testing.T) {
 		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%s'", test.arr1[1])
 	}
 }
+
+func TestIntArray(t *testing.T) {
+
+	type testStruct struct {
+		arr1 []int `default:"{1, 2}"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Default array value not handled correctly. %s", err)
+	}
+	if test.arr1[0] != 1 {
+		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+	}
+	if test.arr1[1] != 2 {
+		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+	}
+}
+func TestInt8Array(t *testing.T) {
+
+	type testStruct struct {
+		arr1 []int8 `default:"{1, 2}"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Default array value not handled correctly. %s", err)
+	}
+	if test.arr1[0] != 1 {
+		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+	}
+	if test.arr1[1] != 2 {
+		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+	}
+}
+
+func TestInt16Array(t *testing.T) {
+	type testStruct struct {
+		arr1 []int16 `default:"{1, 2}"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Default array value not handled correctly. %s", err)
+	}
+	if test.arr1[0] != 1 {
+		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+	}
+	if test.arr1[1] != 2 {
+		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+	}
+}
+
+func TestInt32Array(t *testing.T) {
+	type testStruct struct {
+		arr1 []int32 `default:"{1, 2}"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Default array value not handled correctly. %s", err)
+	}
+	if test.arr1[0] != 1 {
+		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+	}
+	if test.arr1[1] != 2 {
+		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+	}
+}
+
+func TestInt64Array(t *testing.T) {
+	type testStruct struct {
+		arr1 []int64 `default:"{1, 2}"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Default array value not handled correctly. %s", err)
+	}
+	if test.arr1[0] != 1 {
+		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+	}
+	if test.arr1[1] != 2 {
+		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+	}
+}
+
+func TestFloat32Array(t *testing.T) {
+
+	type testStruct struct {
+		arr1 []float32 `default:"{1.2, 2.3}"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Default array value not handled correctly. %s", err)
+	}
+	if test.arr1[0] != 1.2 {
+		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%f'", test.arr1[0])
+	}
+	if test.arr1[1] != 2.3 {
+		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%f'", test.arr1[1])
+	}
+}
+
+func TestFloat64Array(t *testing.T) {
+
+	type testStruct struct {
+		arr1 []float64 `default:"{1.2, 2.3}"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Default array value not handled correctly. %s", err)
+	}
+	if test.arr1[0] != 1.2 {
+		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%f'", test.arr1[0])
+	}
+	if test.arr1[1] != 2.3 {
+		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%f'", test.arr1[1])
+	}
+}
+
+func TestWrongTypeArray(t *testing.T) {
+
+	type testStruct struct {
+		arr1 []bool `default:"{foo, bar}"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Wrong type array not handled correctly. %s", err)
+	}
+}
