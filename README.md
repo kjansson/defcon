@@ -35,11 +35,12 @@ type networkConfig struct {
 }
 
 type config struct {
-	Address  string `default:"localhost"`
-	Port     int    `default:"8080" requires:"Network"`
-	User     string `required:"true"`
-	Password string `required:"true"`
+	Address  string   `default:"localhost"`
+	Port     int      `default:"8080" requires:"Network"`
+	User     string   `required:"true"`
+	Password string   `required:"true"`
 	Network  networkConfig	// Implicitly required by field Port
+	Options  []string `default:"{foo, bar}"`
 }
 
 func main() {
@@ -57,6 +58,7 @@ func main() {
 
 	fmt.Println(configuration.Address) // Output: "localhost"
 	fmt.Println(configuration.Port)    // Output: "8080"
+	fmt.Println(Options)			   // Output: "[foo bar]"
 
 }
 ```
