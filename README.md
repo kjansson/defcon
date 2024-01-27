@@ -57,12 +57,12 @@ func main() {
 		fmt.Println("Parsing error:", err)
 	}
 
-	fmt.Println(configuration.Address) // Output: "localhost"
-	fmt.Println(configuration.Port)    // Output: "8080"
-	fmt.Println(Options)			   // Output: "[foo bar]"
+	fmt.Println(configuration.Address) 	// Output: "localhost"
+	fmt.Println(configuration.Port)    	// Output: "8080"
+	fmt.Println(configuration.Options)	// Output: "[foo bar]"
 
 }
 ```
 
 Try it out!  
-https://go.dev/play/p/C99z89MX8KY
+https://go.dev/play/p/ii0TKwZv7vw
