@@ -12,11 +12,12 @@ import (
 )
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will inspect all fields and their tags.
-// The package supports the tags "default", "required" and "requires". Supported types to tag are all ints, floats and string and slices of these types (structs support the "required" tag).
+// The package supports the tags "default", "required", "requires" and "env". Supported types to tag are all ints, floats and string and slices of these types (structs support the "required" tag).
 // Behaviour;
 // The "default" tag will modify the struct field with the tag value, if the original value is the primitive type default, i.e. zero for numerical values, or zero length string.
 // The "required" tag will return an error if the fields value is the primitive type default. If applied to a struct, the struct will be considered empty if all of its fields have primitive type default values.
 // The "default" tag will be applied first, so if a field is tagged with both "default" and "required", the "required" tag will have no effect.
+// The "env" tag will check if the given environment variable exists and set the value of the field to the value of the environment variable if it does.
 // The "requires" tag will return an error if any of the given fields values (within the same struct) have their primitive type default or is an empty struct.
 // Tags with invalid values such as references to non-existing fields, values that will overflow the numerical types, invalid numerical values, etc. will result in an error.
 
