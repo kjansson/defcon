@@ -479,3 +479,77 @@ func TestEnvVarWithDefault(t *testing.T) {
 		t.Errorf("Env var with default not handled correctly. %s", err)
 	}
 }
+
+func TestEnvVarInteger(t *testing.T) {
+
+	type testStruct struct {
+		Val1 int `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "123")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckConfigStruct(&test)
+	if test.Val1 != 123 {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
+
+func TestEnvVarFloat(t *testing.T) {
+
+	type testStruct struct {
+		Val1 float64 `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "123.123")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckConfigStruct(&test)
+	if test.Val1 != 123.123 {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
+
+func TestEnvVarSlice(t *testing.T) {
+
+	type testStruct struct {
+		arr []string `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "{test1, test2}")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckConfigStruct(&test)
+
+	if test.arr[0] != "test1" {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	if test.arr[1] != "test2" {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
