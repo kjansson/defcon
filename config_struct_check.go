@@ -3,6 +3,7 @@ package defcon
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -11,11 +12,12 @@ import (
 )
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will inspect all fields and their tags.
-// The package supports the tags "default", "required" and "requires". Supported types to tag are all ints, floats and string and slices of these types (structs support the "required" tag).
+// The package supports the tags "default", "required", "requires" and "env". Supported types to tag are all ints, floats and string and slices of these types (structs support the "required" tag).
 // Behaviour;
 // The "default" tag will modify the struct field with the tag value, if the original value is the primitive type default, i.e. zero for numerical values, or zero length string.
 // The "required" tag will return an error if the fields value is the primitive type default. If applied to a struct, the struct will be considered empty if all of its fields have primitive type default values.
 // The "default" tag will be applied first, so if a field is tagged with both "default" and "required", the "required" tag will have no effect.
+// The "env" tag will check if the given environment variable exists and set the value of the field to the value of the environment variable if it does.
 // The "requires" tag will return an error if any of the given fields values (within the same struct) have their primitive type default or is an empty struct.
 // Tags with invalid values such as references to non-existing fields, values that will overflow the numerical types, invalid numerical values, etc. will result in an error.
 
@@ -204,6 +206,7 @@ func checkStruct(v *reflect.Value) error {
 		}
 		defaultValue, hasDefault := v.Type().Field(i).Tag.Lookup("default")
 		requiresValue, requiresField := v.Type().Field(i).Tag.Lookup("requires")
+		envVarValue, hasEnvVar := v.Type().Field(i).Tag.Lookup("env")
 
 		if !v.Type().Field(i).IsExported() {
 			field = reflect.NewAt(v.Field(i).Type(), unsafe.Pointer(v.Field(i).UnsafeAddr())).Elem() // Get access to unexported field
@@ -237,15 +240,25 @@ func checkStruct(v *reflect.Value) error {
 				setFields = append(setFields, fieldName)
 			}
 		} else {
-			if field.IsZero() { // If zero
-				if hasDefault { // If default value exists, set it
+			if field.IsZero() { // If still zero
+				if hasEnvVar { // Check if env var exists
+					envVar := strings.TrimSpace(os.Getenv(envVarValue))
+					if envVar != "" {
+						err := setValue(&field, envVar)
+						if err != nil {
+							return fmt.Errorf("could not set value in field, %s", err)
+						}
+						setFields = append(setFields, fieldName)
+					}
+				}
+				if hasDefault && field.IsZero() { // If default value exists, set it
 					err := setValue(&field, defaultValue)
 					if err != nil {
 						return fmt.Errorf("could not set value in field, %s", err)
 					}
 					setFields = append(setFields, fieldName)
 				}
-				if isRequired { // And required, not allowed
+				if isRequired && field.IsZero() { // And required, not allowed
 					return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", fieldName, field.Type().String())
 				}
 			} else {
