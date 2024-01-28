@@ -1,6 +1,7 @@
 package defcon
 
 import (
+	"os"
 	"testing"
 )
 
@@ -440,5 +441,41 @@ func TestWrongTypeArray(t *testing.T) {
 	err := CheckConfigStruct(&test)
 	if err == nil {
 		t.Errorf("Wrong type array not handled correctly. %s", err)
+	}
+}
+
+func TestEnvVarWithoutDefault(t *testing.T) {
+
+	type testStruct struct {
+		Val1 string `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "test")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckConfigStruct(&test)
+	if test.Val1 != "test" {
+		t.Errorf("Env var without default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
+
+func TestEnvVarWithDefault(t *testing.T) {
+
+	type testStruct struct {
+		Val1 string `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH" default:"test"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if test.Val1 != "test" {
+		t.Errorf("Env var with default not handled correctly. %s", err)
 	}
 }

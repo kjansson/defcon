@@ -3,6 +3,7 @@ package defcon
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -204,6 +205,7 @@ func checkStruct(v *reflect.Value) error {
 		}
 		defaultValue, hasDefault := v.Type().Field(i).Tag.Lookup("default")
 		requiresValue, requiresField := v.Type().Field(i).Tag.Lookup("requires")
+		envVarValue, hasEnvVar := v.Type().Field(i).Tag.Lookup("env")
 
 		if !v.Type().Field(i).IsExported() {
 			field = reflect.NewAt(v.Field(i).Type(), unsafe.Pointer(v.Field(i).UnsafeAddr())).Elem() // Get access to unexported field
@@ -237,15 +239,25 @@ func checkStruct(v *reflect.Value) error {
 				setFields = append(setFields, fieldName)
 			}
 		} else {
-			if field.IsZero() { // If zero
-				if hasDefault { // If default value exists, set it
+			if field.IsZero() { // If still zero
+				if hasEnvVar { // Check if env var exists
+					envVar := strings.TrimSpace(os.Getenv(envVarValue))
+					if envVar != "" {
+						err := setValue(&field, envVar)
+						if err != nil {
+							return fmt.Errorf("could not set value in field, %s", err)
+						}
+						setFields = append(setFields, fieldName)
+					}
+				}
+				if hasDefault && field.IsZero() { // If default value exists, set it
 					err := setValue(&field, defaultValue)
 					if err != nil {
 						return fmt.Errorf("could not set value in field, %s", err)
 					}
 					setFields = append(setFields, fieldName)
 				}
-				if isRequired { // And required, not allowed
+				if isRequired && field.IsZero() { // And required, not allowed
 					return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", fieldName, field.Type().String())
 				}
 			} else {
