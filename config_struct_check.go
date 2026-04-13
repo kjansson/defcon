@@ -12,7 +12,7 @@ import (
 )
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will inspect all fields and their tags.
-// The package supports the tags "default", "required", "requires" and "env". Supported types to tag are all ints, floats and string and slices of these types (structs support the "required" tag).
+// The package supports the tags "default", "required", "requires" and "env". Supported types to tag are all ints, floats, bool and string and slices of these types (structs support the "required" tag).
 // Behaviour;
 // The "default" tag will modify the struct field with the tag value, if the original value is the primitive type default, i.e. zero for numerical values, or zero length string.
 // The "required" tag will return an error if the fields value is the primitive type default. If applied to a struct, the struct will be considered empty if all of its fields have primitive type default values.
@@ -88,6 +88,12 @@ func setValue(v *reflect.Value, val string) error {
 			return err
 		}
 		v.SetFloat(floating)
+	case "bool":
+		boolean, err := strconv.ParseBool(val) // Parse string to bool (accepts "true", "false", "TRUE", "FALSE", "True", "False", "1", "0")
+		if err != nil {
+			return err
+		}
+		v.SetBool(boolean)
 	case "string":
 		v.SetString(val)
 	case "slice":
