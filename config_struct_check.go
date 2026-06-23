@@ -245,7 +245,59 @@ func checkStruct(v *reflect.Value) error {
 			if !field.IsZero() { // Check if field is set and add it to set fields map
 				setFields = append(setFields, fieldName)
 			}
+		} else if field.Kind() == reflect.Slice { // This is a slice
+			// Check required constraint first
+			if isRequired && field.Len() == 0 {
+				return fmt.Errorf("field %s (slice) is marked as required but is empty", fieldName)
+			}
+			// Check if the slice contains structs
+			if field.Len() > 0 && field.Index(0).Kind() == reflect.Struct {
+				// Iterate through slice elements and check each struct
+				for j := 0; j < field.Len(); j++ {
+					element := field.Index(j)
+					if element.CanSet() || element.CanAddr() {
+						elementPtr := element
+						if element.CanAddr() {
+							elementPtr = element.Addr().Elem()
+						}
+						if err := checkStruct(&elementPtr); err != nil {
+							return fmt.Errorf("error in slice %s at index %d: %s", fieldName, j, err)
+						}
+					}
+				}
+				// Mark as set if slice is not empty
+				if field.Len() > 0 {
+					setFields = append(setFields, fieldName)
+				}
+			} else {
+				// For non-struct slices, handle defaults and env vars as before
+				if field.IsZero() { // If still zero
+					if hasEnvVar { // Check if env var exists
+						envVar := strings.TrimSpace(os.Getenv(envVarValue))
+						if envVar != "" {
+							err := setValue(&field, envVar)
+							if err != nil {
+								return fmt.Errorf("could not set value in field, %s", err)
+							}
+							setFields = append(setFields, fieldName)
+						}
+					}
+					if hasDefault && field.IsZero() { // If default value exists, set it
+						err := setValue(&field, defaultValue)
+						if err != nil {
+							return fmt.Errorf("could not set value in field, %s", err)
+						}
+						setFields = append(setFields, fieldName)
+					}
+					if isRequired && field.IsZero() { // And required, not allowed
+						return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", fieldName, field.Type().String())
+					}
+				} else {
+					setFields = append(setFields, fieldName) // This field has a value, save as set
+				}
+			}
 		} else {
+			// Handle all other types (int, float, bool, string, etc.)
 			if field.IsZero() { // If still zero
 				if hasEnvVar { // Check if env var exists
 					envVar := strings.TrimSpace(os.Getenv(envVarValue))

@@ -718,3 +718,238 @@ func TestEnvVarSlice(t *testing.T) {
 		t.Errorf("Could not unset environment variable for test.")
 	}
 }
+
+// Test slice of structs with default values
+func TestSliceOfStructs(t *testing.T) {
+	type nestedStruct struct {
+		Name  string `default:"default_name"`
+		Value int    `default:"42"`
+	}
+	type testStruct struct {
+		Items []nestedStruct
+	}
+
+	test := testStruct{
+		Items: []nestedStruct{
+			{},                         // Empty struct, should get defaults
+			{Name: "custom"},           // Partially filled, only Value should get default
+			{Name: "full", Value: 100}, // Fully filled, no defaults applied
+		},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice of structs not handled correctly: %s", err)
+	}
+
+	// First element should have all defaults
+	if test.Items[0].Name != "default_name" {
+		t.Errorf("First element Name should be 'default_name', got '%s'", test.Items[0].Name)
+	}
+	if test.Items[0].Value != 42 {
+		t.Errorf("First element Value should be 42, got %d", test.Items[0].Value)
+	}
+
+	// Second element should have custom Name and default Value
+	if test.Items[1].Name != "custom" {
+		t.Errorf("Second element Name should be 'custom', got '%s'", test.Items[1].Name)
+	}
+	if test.Items[1].Value != 42 {
+		t.Errorf("Second element Value should be 42, got %d", test.Items[1].Value)
+	}
+
+	// Third element should keep its values
+	if test.Items[2].Name != "full" {
+		t.Errorf("Third element Name should be 'full', got '%s'", test.Items[2].Name)
+	}
+	if test.Items[2].Value != 100 {
+		t.Errorf("Third element Value should be 100, got %d", test.Items[2].Value)
+	}
+}
+
+// Test slice of structs with required fields
+func TestSliceOfStructsWithRequired(t *testing.T) {
+	type nestedStruct struct {
+		Name string `required:"true"`
+	}
+	type testStruct struct {
+		Items []nestedStruct
+	}
+
+	// Test with empty field in slice element - should fail
+	test := testStruct{
+		Items: []nestedStruct{
+			{Name: "valid"},
+			{}, // Empty Name, should trigger error
+		},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Required field in slice element was not caught")
+	}
+
+	// Test with all valid fields - should pass
+	test2 := testStruct{
+		Items: []nestedStruct{
+			{Name: "first"},
+			{Name: "second"},
+		},
+	}
+
+	err = CheckConfigStruct(&test2)
+	if err != nil {
+		t.Errorf("Valid slice of structs with required fields failed: %s", err)
+	}
+}
+
+// Test required slice of structs (slice itself is required)
+func TestRequiredSliceOfStructs(t *testing.T) {
+	type nestedStruct struct {
+		Name string
+	}
+	type testStruct struct {
+		Items []nestedStruct `required:"true"`
+	}
+
+	// Empty slice should fail
+	test := testStruct{
+		Items: []nestedStruct{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Required empty slice was not caught")
+	}
+
+	// Non-empty slice should pass
+	test2 := testStruct{
+		Items: []nestedStruct{
+			{Name: "item"},
+		},
+	}
+
+	err = CheckConfigStruct(&test2)
+	if err != nil {
+		t.Errorf("Valid required slice failed: %s", err)
+	}
+}
+
+// Test deeply nested structs in slices
+func TestSliceOfNestedStructs(t *testing.T) {
+	type deepStruct struct {
+		DeepValue string `default:"deep_default"`
+	}
+	type nestedStruct struct {
+		Name string `default:"nested_default"`
+		Deep deepStruct
+	}
+	type testStruct struct {
+		Items []nestedStruct
+	}
+
+	test := testStruct{
+		Items: []nestedStruct{
+			{}, // Both levels should get defaults
+		},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Deeply nested structs in slice not handled correctly: %s", err)
+	}
+
+	if test.Items[0].Name != "nested_default" {
+		t.Errorf("Nested struct default not applied, got '%s'", test.Items[0].Name)
+	}
+	if test.Items[0].Deep.DeepValue != "deep_default" {
+		t.Errorf("Deep struct default not applied, got '%s'", test.Items[0].Deep.DeepValue)
+	}
+}
+
+// Test slice of structs with bool fields
+func TestSliceOfStructsWithBool(t *testing.T) {
+	type nestedStruct struct {
+		Enabled bool   `default:"true"`
+		Name    string `default:"item"`
+	}
+	type testStruct struct {
+		Items []nestedStruct
+	}
+
+	test := testStruct{
+		Items: []nestedStruct{
+			{},                              // Should get defaults
+			{Enabled: true, Name: "custom"}, // Explicitly set to true (non-zero value)
+		},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice of structs with bool not handled correctly: %s", err)
+	}
+
+	// First element should get defaults
+	if test.Items[0].Enabled != true {
+		t.Errorf("First element Enabled should be true, got %t", test.Items[0].Enabled)
+	}
+	if test.Items[0].Name != "item" {
+		t.Errorf("First element Name should be 'item', got '%s'", test.Items[0].Name)
+	}
+
+	// Second element should keep its values
+	if test.Items[1].Enabled != true {
+		t.Errorf("Second element Enabled should be true, got %t", test.Items[1].Enabled)
+	}
+	if test.Items[1].Name != "custom" {
+		t.Errorf("Second element Name should be 'custom', got '%s'", test.Items[1].Name)
+	}
+}
+
+// Test that bool fields with default "true" cannot be set to false
+// This is a known limitation: false is the zero value, so it's indistinguishable from "not set"
+func TestSliceOfStructsWithBoolLimitation(t *testing.T) {
+	type nestedStruct struct {
+		Enabled bool `default:"true"`
+	}
+	type testStruct struct {
+		Items []nestedStruct
+	}
+
+	// Note: Setting Enabled to false in the struct initializer won't work
+	// because false is the zero value - the default will be applied
+	test := testStruct{
+		Items: []nestedStruct{
+			{Enabled: false}, // This will get the default "true" applied
+		},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	// The field will have the default value, not false
+	if test.Items[0].Enabled != true {
+		t.Errorf("Field got default value as expected: %t", test.Items[0].Enabled)
+	}
+}
+
+// Test empty slice (not required)
+func TestEmptySliceOfStructs(t *testing.T) {
+	type nestedStruct struct {
+		Name string `default:"default"`
+	}
+	type testStruct struct {
+		Items []nestedStruct
+	}
+
+	test := testStruct{
+		Items: []nestedStruct{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Empty slice of structs should be valid: %s", err)
+	}
+}
