@@ -3,12 +3,10 @@ package defcon
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
-	"unsafe"
 )
 
 // CheckConfigStruct accepts any struct (supports nested structs) and will inspect all fields and their tags.
@@ -23,8 +21,21 @@ import (
 
 func CheckConfigStruct(config interface{}) error {
 
-	c := reflect.ValueOf(config).Elem()
-	return checkStruct(&c)
+	//c := reflect.ValueOf(config).Elem()
+	//return checkStruct(&c)
+
+	s := reflect.ValueOf(config).Elem()
+
+	field := structField{}
+	field.new(&s)
+	//annotations := getAnnotations(reflect.TypeOf(config).Elem().Field(0)) // Get annotations for the field
+	err := field.handle(nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
 
 // Finds a string value in an array of strings
@@ -36,6 +47,10 @@ func existsIn(subject []string, searchValue string) bool {
 		}
 	}
 	return false
+}
+
+func isTrue(value string) bool {
+	return value == "true" || value == "TRUE"
 }
 
 // Get reflection type and returns its type family and number of bits
@@ -198,142 +213,197 @@ func setValue(v *reflect.Value, val string) error {
 	return nil
 }
 
-func checkStruct(v *reflect.Value) error {
+func getAnnotations(v reflect.StructField) annotations {
 
-	requiresMap := make(map[string][]string) // Map containing all fields tagged as "requires" by other
-	setFields := []string{}                  // Map containing all fields with a non-empty value
-	var field reflect.Value
+	var annotations annotations
 
-	for i := 0; i < v.NumField(); i++ { // Loop through fields in struct
-		// Get tags
-		requiredValue, isRequired := v.Type().Field(i).Tag.Lookup("required")
-		if requiredValue != "true" && requiredValue != "TRUE" {
-			isRequired = false
-		}
-		defaultValue, hasDefault := v.Type().Field(i).Tag.Lookup("default")
-		requiresValue, requiresField := v.Type().Field(i).Tag.Lookup("requires")
-		envVarValue, hasEnvVar := v.Type().Field(i).Tag.Lookup("env")
-
-		if !v.Type().Field(i).IsExported() {
-			field = reflect.NewAt(v.Field(i).Type(), unsafe.Pointer(v.Field(i).UnsafeAddr())).Elem() // Get access to unexported field
-		} else {
-			field = v.Field(i)
-		}
-		fieldName := v.Type().Field(i).Name
-
-		if requiresField {
-			for _, reqVal := range strings.Split(requiresValue, ",") { // Split all field names in requires tag value
-				reqsFieldName := strings.TrimSpace(reqVal)
-				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(reqsFieldName) // Check if name of field is valid
-				if !match {
-					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", reqsFieldName, fieldName)
-				} else {
-					requiresMap[fieldName] = append(requiresMap[fieldName], reqsFieldName) // Add to requires map
-				}
-			}
-		}
-
-		if field.Kind() == reflect.Struct { // This is a nested struct
-			if field.CanSet() {
-				if err := checkStruct(&field); err != nil { // Drill down in nested struct
-					return err
-				}
-			}
-			if field.IsZero() && isRequired { // Empty but required should return error
-				return fmt.Errorf("field %s (struct) is marked as required but has no fields with non-empty values", fieldName)
-			}
-			if !field.IsZero() { // Check if field is set and add it to set fields map
-				setFields = append(setFields, fieldName)
-			}
-		} else if field.Kind() == reflect.Slice { // This is a slice
-			// Check required constraint first
-			if isRequired && field.Len() == 0 {
-				return fmt.Errorf("field %s (slice) is marked as required but is empty", fieldName)
-			}
-			// Check if the slice contains structs
-			if field.Len() > 0 && field.Index(0).Kind() == reflect.Struct {
-				// Iterate through slice elements and check each struct
-				for j := 0; j < field.Len(); j++ {
-					element := field.Index(j)
-					if element.CanSet() || element.CanAddr() {
-						elementPtr := element
-						if element.CanAddr() {
-							elementPtr = element.Addr().Elem()
-						}
-						if err := checkStruct(&elementPtr); err != nil {
-							return fmt.Errorf("error in slice %s at index %d: %s", fieldName, j, err)
-						}
-					}
-				}
-				// Mark as set if slice is not empty
-				if field.Len() > 0 {
-					setFields = append(setFields, fieldName)
-				}
-			} else {
-				// For non-struct slices, handle defaults and env vars as before
-				if field.IsZero() { // If still zero
-					if hasEnvVar { // Check if env var exists
-						envVar := strings.TrimSpace(os.Getenv(envVarValue))
-						if envVar != "" {
-							err := setValue(&field, envVar)
-							if err != nil {
-								return fmt.Errorf("could not set value in field, %s", err)
-							}
-							setFields = append(setFields, fieldName)
-						}
-					}
-					if hasDefault && field.IsZero() { // If default value exists, set it
-						err := setValue(&field, defaultValue)
-						if err != nil {
-							return fmt.Errorf("could not set value in field, %s", err)
-						}
-						setFields = append(setFields, fieldName)
-					}
-					if isRequired && field.IsZero() { // And required, not allowed
-						return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", fieldName, field.Type().String())
-					}
-				} else {
-					setFields = append(setFields, fieldName) // This field has a value, save as set
-				}
-			}
-		} else {
-			// Handle all other types (int, float, bool, string, etc.)
-			if field.IsZero() { // If still zero
-				if hasEnvVar { // Check if env var exists
-					envVar := strings.TrimSpace(os.Getenv(envVarValue))
-					if envVar != "" {
-						err := setValue(&field, envVar)
-						if err != nil {
-							return fmt.Errorf("could not set value in field, %s", err)
-						}
-						setFields = append(setFields, fieldName)
-					}
-				}
-				if hasDefault && field.IsZero() { // If default value exists, set it
-					err := setValue(&field, defaultValue)
-					if err != nil {
-						return fmt.Errorf("could not set value in field, %s", err)
-					}
-					setFields = append(setFields, fieldName)
-				}
-				if isRequired && field.IsZero() { // And required, not allowed
-					return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", fieldName, field.Type().String())
-				}
-			} else {
-				setFields = append(setFields, fieldName) // This field has a value, save as set
-			}
-		}
+	required, found := v.Tag.Lookup("required")
+	if found && !isTrue(required) {
+		annotations.Required = false
+	}
+	annotations.DefaultValue, found = v.Tag.Lookup("default")
+	annotations.DefaultFromField, found = v.Tag.Lookup("defaultfrom")
+	annotations.RequiresField, found = v.Tag.Lookup("requires")
+	annotations.EnvVarName, found = v.Tag.Lookup("env")
+	mustHave, found := v.Tag.Lookup("musthave")
+	if found {
+		annotations.MustHave = strings.Split(mustHave, ",")
+	}
+	unique, found := v.Tag.Lookup("unique")
+	if found && !isTrue(unique) {
+		annotations.Unique = false
 	}
 
-	for parentField, requiredFields := range requiresMap { // Range trough all requires
-		for _, requiredField := range requiredFields {
-			if !existsIn(setFields, parentField) {
-				return fmt.Errorf("field %s requires field %s but is itself empty/not set", requiredField, parentField)
-			}
-			if !existsIn(setFields, requiredField) { // Check if the requires field was registered as set
-				return fmt.Errorf("field %s requires field %s which is empty/not set", parentField, requiredField)
-			}
-		}
-	}
-	return nil
+	return annotations
 }
+
+// func checkStruct(v *reflect.Value) error {
+
+// 	requiresMap := make(map[string][]string) // Map containing all fields tagged as "requires" by other
+// 	setFields := []string{}                  // Map containing all fields with a non-empty value
+// 	var field reflect.Value
+
+// 	//var found bool
+
+// 	for i := 0; i < v.NumField(); i++ { // Loop through fields in struct
+
+// 		annotations := getAnnotations(v.Type().Field(i)) // Get annotations for the field
+// 		// Get tags
+
+// 		//required, found := v.Type().Field(i).Tag.Lookup("required")
+// 		// if found && !isTrue(required) {
+// 		// 	annotations.Required = false
+// 		// }
+// 		// annotations.DefaultValue, found = v.Type().Field(i).Tag.Lookup("default")
+// 		// annotations.DefaultFromField, found = v.Type().Field(i).Tag.Lookup("defaultfrom")
+// 		// annotations.RequiresField, found = v.Type().Field(i).Tag.Lookup("requires")
+// 		// annotations.EnvVarName, found = v.Type().Field(i).Tag.Lookup("env")
+// 		// mustHave, found := v.Type().Field(i).Tag.Lookup("musthave")
+// 		// if found {
+// 		// 	annotations.MustHave = strings.Split(mustHave, ",")
+// 		// }
+// 		// unique, found := v.Type().Field(i).Tag.Lookup("unique")
+// 		// if found && !isTrue(unique) {
+// 		// 	annotations.Unique = false
+// 		// }
+
+// 		// requiredValue, annotations.Required = v.Type().Field(i).Tag.Lookup("required")
+// 		// if requiredValue != "true" && requiredValue != "TRUE" {
+// 		// 	annotations.Required = false
+// 		// }
+// 		// defaultValue, hasDefault := v.Type().Field(i).Tag.Lookup("default")
+// 		// defaultFromField, hasDefaultFromField := v.Type().Field(i).Tag.Lookup("defaultfrom")
+// 		// requiresValue, requiresField := v.Type().Field(i).Tag.Lookup("requires")
+// 		// envVarValue, hasEnvVar := v.Type().Field(i).Tag.Lookup("env")
+// 		// mustHaveValues, mustHave := v.Type().Field(i).Tag.Lookup("musthave")
+// 		// uniqueValue, hasUnique := v.Type().Field(i).Tag.Lookup("unique")
+// 		// if uniqueValue != "true" && uniqueValue != "TRUE" {
+// 		// 	hasUnique = false
+// 		// }
+// 		// //oneOfValues, oneOf := v.Type().Field(i).Tag.Lookup("oneof")
+// 		// mustMatchValues, mustMatch := v.Type().Field(i).Tag.Lookup("mustmatch")
+
+// 		if !v.Type().Field(i).IsExported() {
+// 			field = reflect.NewAt(v.Field(i).Type(), unsafe.Pointer(v.Field(i).UnsafeAddr())).Elem() // Get access to unexported field
+// 		} else {
+// 			field = v.Field(i)
+// 		}
+// 		fieldName := v.Type().Field(i).Name
+// 		kind := field.Kind()
+
+// 		if requiresField {
+// 			for _, reqVal := range strings.Split(requiresValue, ",") { // Split all field names in requires tag value
+// 				reqsFieldName := strings.TrimSpace(reqVal)
+// 				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(reqsFieldName) // Check if name of field is valid
+// 				if !match {
+// 					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", reqsFieldName, fieldName)
+// 				} else {
+// 					requiresMap[fieldName] = append(requiresMap[fieldName], reqsFieldName) // Add to requires map
+// 				}
+// 			}
+// 		}
+
+// 		if field.Kind() == reflect.Struct { // This is a nested struct
+// 			if field.CanSet() {
+// 				if err := checkStruct(&field); err != nil { // Drill down in nested struct
+// 					return err
+// 				}
+// 			}
+// 			if field.IsZero() && isRequired { // Empty but required should return error
+// 				return fmt.Errorf("field %s (struct) is marked as required but has no fields with non-empty values", fieldName)
+// 			}
+// 			if !field.IsZero() { // Check if field is set and add it to set fields map
+// 				setFields = append(setFields, fieldName)
+// 			}
+// 		} else if field.Kind() == reflect.Slice { // This is a slice
+// 			// Check required constraint first
+// 			if isRequired && field.Len() == 0 {
+// 				return fmt.Errorf("field %s (slice) is marked as required but is empty", fieldName)
+// 			}
+// 			// Check if the slice contains structs
+// 			if field.Len() > 0 && field.Index(0).Kind() == reflect.Struct {
+// 				// Iterate through slice elements and check each struct
+// 				for j := 0; j < field.Len(); j++ {
+// 					element := field.Index(j)
+// 					if element.CanSet() || element.CanAddr() {
+// 						elementPtr := element
+// 						if element.CanAddr() {
+// 							elementPtr = element.Addr().Elem()
+// 						}
+// 						if err := checkStruct(&elementPtr); err != nil {
+// 							return fmt.Errorf("error in slice %s at index %d: %s", fieldName, j, err)
+// 						}
+// 					}
+// 				}
+// 				// Mark as set if slice is not empty
+// 				if field.Len() > 0 {
+// 					setFields = append(setFields, fieldName)
+// 				}
+// 			} else {
+// 				// For non-struct slices, handle defaults and env vars as before
+// 				if field.IsZero() { // If still zero
+// 					if hasEnvVar { // Check if env var exists
+// 						envVar := strings.TrimSpace(os.Getenv(envVarValue))
+// 						if envVar != "" {
+// 							err := setValue(&field, envVar)
+// 							if err != nil {
+// 								return fmt.Errorf("could not set value in field, %s", err)
+// 							}
+// 							setFields = append(setFields, fieldName)
+// 						}
+// 					}
+// 					if hasDefault && field.IsZero() { // If default value exists, set it
+// 						err := setValue(&field, defaultValue)
+// 						if err != nil {
+// 							return fmt.Errorf("could not set value in field, %s", err)
+// 						}
+// 						setFields = append(setFields, fieldName)
+// 					}
+// 					if isRequired && field.IsZero() { // And required, not allowed
+// 						return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", fieldName, field.Type().String())
+// 					}
+// 				} else {
+// 					setFields = append(setFields, fieldName) // This field has a value, save as set
+// 				}
+// 			}
+// 		} else {
+// 			// Handle all other types (int, float, bool, string, etc.)
+// 			if field.IsZero() { // If still zero
+// 				if hasEnvVar { // Check if env var exists
+// 					envVar := strings.TrimSpace(os.Getenv(envVarValue))
+// 					if envVar != "" {
+// 						err := setValue(&field, envVar)
+// 						if err != nil {
+// 							return fmt.Errorf("could not set value in field, %s", err)
+// 						}
+// 						setFields = append(setFields, fieldName)
+// 					}
+// 				}
+// 				if hasDefault && field.IsZero() { // If default value exists, set it
+// 					err := setValue(&field, defaultValue)
+// 					if err != nil {
+// 						return fmt.Errorf("could not set value in field, %s", err)
+// 					}
+// 					setFields = append(setFields, fieldName)
+// 				}
+// 				if isRequired && field.IsZero() { // And required, not allowed
+// 					return fmt.Errorf("field %s (%s) is marked as required but has zero/empty value", fieldName, field.Type().String())
+// 				}
+// 			} else {
+// 				setFields = append(setFields, fieldName) // This field has a value, save as set
+// 			}
+// 		}
+// 	}
+
+// 	for parentField, requiredFields := range requiresMap { // Range trough all requires
+// 		for _, requiredField := range requiredFields {
+// 			if !existsIn(setFields, parentField) {
+// 				return fmt.Errorf("field %s requires field %s but is itself empty/not set", requiredField, parentField)
+// 			}
+// 			if !existsIn(setFields, requiredField) { // Check if the requires field was registered as set
+// 				return fmt.Errorf("field %s requires field %s which is empty/not set", parentField, requiredField)
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
