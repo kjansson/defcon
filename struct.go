@@ -42,6 +42,14 @@ func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 	if found {
 		annotations.AlwaysHas = strings.Split(alwaysHas, ",")
 	}
+	mustMatch, found := v.Tag.Lookup("mustmatch")
+	if found {
+		annotations.MustMatch = mustMatch
+	}
+	mustNotMatch, found := v.Tag.Lookup("mustnotmatch")
+	if found {
+		annotations.MustMatch = mustNotMatch
+	}
 
 	return &annotations
 }

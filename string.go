@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 )
 
 type stringField struct {
@@ -35,6 +36,26 @@ func (f *stringField) handle(a *annotations) error {
 		if f.field.IsZero() {
 			// Return an error if the field is required but has no value
 			return fmt.Errorf("field is marked as required but has no value")
+		}
+	}
+
+	if a.MustMatch != "" && !f.field.IsZero() {
+		regex, err := regexp.Compile(a.MustMatch)
+		if err != nil {
+			return fmt.Errorf("failed to compile regex: %v", err)
+		}
+		if !regex.MatchString(f.field.String()) {
+			return fmt.Errorf("field value '%s' does not match regex '%s'", f.field.String(), a.MustMatch)
+		}
+	}
+
+	if a.MustNotMatch != "" && !f.field.IsZero() {
+		regex, err := regexp.Compile(a.MustNotMatch)
+		if err != nil {
+			return fmt.Errorf("failed to compile regex: %v", err)
+		}
+		if regex.MatchString(f.field.String()) {
+			return fmt.Errorf("field value '%s' matches forbidden regex '%s'", f.field.String(), a.MustNotMatch)
 		}
 	}
 

@@ -1249,3 +1249,67 @@ func TestSliceAlwaysHasFieldFloat64(t *testing.T) {
 		}
 	}
 }
+
+func TestStringMustMatch(t *testing.T) {
+
+	type testStruct struct {
+		Val string `mustmatch:"^test.*"`
+	}
+
+	test := testStruct{
+		Val: "testValue",
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("String field with mustmatch should be valid: %s", err)
+	}
+}
+
+func TestSliceMustMatch(t *testing.T) {
+
+	type testStruct struct {
+		Val []string `mustmatch:"^test.*"`
+	}
+
+	test := testStruct{
+		Val: []string{"testValue", "testAnother"},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("String field with mustmatch should be valid: %s", err)
+	}
+}
+
+func TestStringMustNotMatch(t *testing.T) {
+
+	type testStruct struct {
+		Val string `mustnotmatch:"^test.*"`
+	}
+
+	test := testStruct{
+		Val: "testValue",
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("String field with mustnotmatch should be valid: %s", err)
+	}
+}
+
+func TestSliceMustNotMatch(t *testing.T) {
+
+	type testStruct struct {
+		Val []string `mustnotmatch:"^test.*"`
+	}
+
+	test := testStruct{
+		Val: []string{"testValue", "testAnother"},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice field with mustnotmatch should be valid: %s", err)
+	}
+}

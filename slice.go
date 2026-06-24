@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 )
 
 type sliceField struct {
@@ -124,6 +125,30 @@ func (f *sliceField) handle(a *annotations) error {
 				}
 
 				f.field.Set(reflect.Append(f.field, val))
+			}
+		}
+	}
+
+	if a.MustMatch != "" && f.field.Len() > 0 {
+		regex, err := regexp.Compile(a.MustMatch)
+		if err != nil {
+			return fmt.Errorf("failed to compile regex: %v", err)
+		}
+		for i := 0; i < f.field.Len(); i++ {
+			if !regex.MatchString(f.field.Index(i).String()) {
+				return fmt.Errorf("field value '%s' does not match regex '%s'", f.field.Index(i).String(), a.MustMatch)
+			}
+		}
+	}
+
+	if a.MustNotMatch != "" && f.field.Len() > 0 {
+		regex, err := regexp.Compile(a.MustNotMatch)
+		if err != nil {
+			return fmt.Errorf("failed to compile regex: %v", err)
+		}
+		for i := 0; i < f.field.Len(); i++ {
+			if regex.MatchString(f.field.Index(i).String()) {
+				return fmt.Errorf("field value '%s' matches forbidden regex '%s'", f.field.Index(i).String(), a.MustNotMatch)
 			}
 		}
 	}
