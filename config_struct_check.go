@@ -38,17 +38,6 @@ func CheckConfigStruct(config interface{}) error {
 
 }
 
-// Finds a string value in an array of strings
-func existsIn(subject []string, searchValue string) bool {
-
-	for _, value := range subject {
-		if value == searchValue {
-			return true
-		}
-	}
-	return false
-}
-
 func isTrue(value string) bool {
 	return value == "true" || value == "TRUE"
 }
@@ -213,29 +202,198 @@ func setValue(v *reflect.Value, val string) error {
 	return nil
 }
 
-func getAnnotations(v reflect.StructField) annotations {
+// // Checks that a comparison is equal to the value of a reflect.Value, taking into account the type of the value. Returns the reflect.Value of the comparison if they are equal, or an error if they are not equal or if the type is not supported.
+// func getEqualTypeFromValue(value reflect.Value, comparison string) (reflect.Value, error) {
 
-	var annotations annotations
+// 	family, bits := getTypeDetails(value) // Get type family and number of bits if applicable
+// 	fmt.Println("Family: ", family)
+// 	comparison = strings.TrimSpace(comparison)
 
-	required, found := v.Tag.Lookup("required")
-	if found && !isTrue(required) {
-		annotations.Required = false
-	}
-	annotations.DefaultValue, found = v.Tag.Lookup("default")
-	annotations.DefaultFromField, found = v.Tag.Lookup("defaultfrom")
-	annotations.RequiresField, found = v.Tag.Lookup("requires")
-	annotations.EnvVarName, found = v.Tag.Lookup("env")
-	mustHave, found := v.Tag.Lookup("musthave")
-	if found {
-		annotations.MustHave = strings.Split(mustHave, ",")
-	}
-	unique, found := v.Tag.Lookup("unique")
-	if found && !isTrue(unique) {
-		annotations.Unique = false
+// 	fmt.Println("Comparison: ", comparison)
+
+// 	// Parse numerical values if needed and set values
+// 	switch family {
+// 	case "int":
+// 		integer, err := strconv.ParseInt(comparison, 10, bits) // Parse string to int
+// 		ret := reflect.ValueOf(integer)
+// 		if err != nil {
+// 			return reflect.Value{}, err
+// 		}
+// 		if integer == value.Int() {
+// 			return ret, nil
+// 		}
+// 	case "float":
+// 		floating, err := strconv.ParseFloat(comparison, bits) // Parse string to float
+// 		ret := reflect.ValueOf(floating)
+// 		if err != nil {
+// 			return reflect.Value{}, err
+// 		}
+// 		if floating == value.Float() {
+// 			return ret, nil
+// 		}
+
+// 	case "bool":
+// 		boolean, err := strconv.ParseBool(comparison) // Parse string to bool (accepts "true", "false", "TRUE", "FALSE", "True", "False", "1", "0")
+// 		if err != nil {
+// 			return reflect.Value{}, err
+// 		}
+// 		if boolean == value.Bool() {
+// 			return reflect.ValueOf(boolean), nil
+// 		}
+
+// 	case "string":
+// 		if comparison == value.String() {
+// 			return reflect.ValueOf(comparison), nil
+// 		}
+// 	default:
+// 		return reflect.Value{}, fmt.Errorf("Could not determine type")
+// 	}
+
+// 	return reflect.Value{}, nil
+// }
+
+func createTypeFromValue(typedValue reflect.Value, untypedValueString string) (reflect.Value, error) {
+
+	family, bits := getTypeDetails(typedValue) // Get type family and number of bits if applicable
+	// fmt.Println("Family: ", family)
+	// fmt.Println("Bits: ", bits)
+	untypedValueString = strings.TrimSpace(untypedValueString)
+
+	// fmt.Println("Comparison: ", untypedValueString)
+
+	// Parse numerical values if needed and set values
+	switch family {
+	case "int":
+		integer, err := strconv.ParseInt(untypedValueString, 10, bits) // Parse string to int
+		if err != nil {
+			return reflect.Value{}, err
+		}
+
+		// ret := reflect.ValueOf(integer)
+
+		//if integer == value.Int() {
+		//return ret, nil
+		switch bits {
+		case 8:
+			return reflect.ValueOf(int8(integer)), nil
+		case 16:
+			return reflect.ValueOf(int16(integer)), nil
+		case 32:
+			return reflect.ValueOf(int32(integer)), nil
+		case 64:
+			return reflect.ValueOf(int64(integer)), nil
+		default:
+			return reflect.ValueOf(int(integer)), nil
+		}
+		//		}
+	case "float":
+		floating, err := strconv.ParseFloat(untypedValueString, bits) // Parse string to float
+		//ret := reflect.ValueOf(floating)
+		if err != nil {
+			return reflect.Value{}, err
+		}
+
+		switch bits {
+		case 32:
+			return reflect.ValueOf(float32(floating)), nil
+		case 64:
+			return reflect.ValueOf(float64(floating)), nil
+		default:
+			return reflect.ValueOf(float64(floating)), nil
+		}
+		//if floating == value.Float() {
+		//return ret, nil
+		//		}
+
+	case "bool":
+		boolean, err := strconv.ParseBool(untypedValueString) // Parse string to bool (accepts "true", "false", "TRUE", "FALSE", "True", "False", "1", "0")
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		//if boolean == value.Bool() {
+		return reflect.ValueOf(boolean), nil
+		//}
+
+	case "string":
+		//if comparison == value.String() {
+		return reflect.ValueOf(untypedValueString), nil
+		//}
+	default:
+		return reflect.Value{}, fmt.Errorf("Could not determine type")
 	}
 
-	return annotations
+	//return reflect.Value{}, nil
 }
+
+// // Checks that a comparison is equal to the value of a reflect.Value, taking into account the type of the value. Returns true if they are equal, false otherwise.
+// func checkEqualType(value reflect.Value, comparison string) (bool, error) {
+
+// 	family, bits := getTypeDetails(value) // Get type family and number of bits if applicable
+
+// 	comparison = strings.TrimSpace(comparison)
+
+// 	// Parse numerical values if needed and set values
+// 	switch family {
+// 	case "int":
+// 		integer, err := strconv.ParseInt(comparison, 10, bits) // Parse string to int
+// 		if err != nil {
+// 			return false, err
+// 		}
+// 		if integer == value.Int() {
+// 			return true, nil
+// 		}
+// 	case "float":
+// 		floating, err := strconv.ParseFloat(comparison, bits) // Parse string to float
+// 		if err != nil {
+// 			return false, err
+// 		}
+// 		if floating == value.Float() {
+// 			return true, nil
+// 		}
+
+// 	case "bool":
+// 		boolean, err := strconv.ParseBool(comparison) // Parse string to bool (accepts "true", "false", "TRUE", "FALSE", "True", "False", "1", "0")
+// 		if err != nil {
+// 			return false, err
+// 		}
+// 		if boolean == value.Bool() {
+// 			return true, nil
+// 		}
+
+// 	case "string":
+// 		if comparison == value.String() {
+// 			return true, nil
+// 		}
+// 	default:
+// 		return false, fmt.Errorf("Could not determine type")
+// 	}
+
+// 	return false, nil
+// }
+
+// func getAnnotations(v reflect.StructField) annotations {
+
+// 	var annotations annotations
+
+// 	required, found := v.Tag.Lookup("required")
+// 	if found && !isTrue(required) {
+// 		annotations.Required = false
+// 	}
+// 	annotations.DefaultValue, found = v.Tag.Lookup("default")
+// 	annotations.DefaultFromField, found = v.Tag.Lookup("defaultfrom")
+// 	annotations.RequiresField, found = v.Tag.Lookup("requires")
+// 	annotations.EnvVarName, found = v.Tag.Lookup("env")
+// 	mustHave, found := v.Tag.Lookup("musthave")
+// 	if found {
+// 		annotations.MustHave = strings.Split(mustHave, ",")
+// 	}
+// 	unique, found := v.Tag.Lookup("unique")
+// 	if found && !isTrue(unique) {
+// 		annotations.Unique = false
+// 	}
+
+// 	return annotations
+// }
 
 // func checkStruct(v *reflect.Value) error {
 

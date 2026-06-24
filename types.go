@@ -14,6 +14,7 @@ type annotations struct {
 	OneOf            string
 	MustMatch        string
 	MustHave         []string
+	AlwaysHas        []string
 }
 
 type field interface {
@@ -39,3 +40,7 @@ func getType(v reflect.Value) (field, error) {
 		return nil, nil
 	}
 }
+
+// alwayshas check
+// mustnothave
+// mustnotmatch

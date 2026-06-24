@@ -953,3 +953,299 @@ func TestEmptySliceOfStructs(t *testing.T) {
 		t.Errorf("Empty slice of structs should be valid: %s", err)
 	}
 }
+
+func TestSliceMustHaveRequiredFieldString(t *testing.T) {
+
+	type testStruct struct {
+		Items []string `musthave:"item1, item2"`
+	}
+
+	test := testStruct{
+		Items: []string{"item1", "item3"},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Slice element missing required string field was not detected")
+	}
+}
+
+func TestSliceMustHaveRequiredFieldInt(t *testing.T) {
+
+	type testStruct struct {
+		Items []int `musthave:"1, 3"`
+	}
+
+	test := testStruct{
+		Items: []int{1, 2},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Slice element missing required int field was not detected")
+	}
+}
+
+func TestSliceMustHaveRequiredFieldInt8(t *testing.T) {
+
+	type testStruct struct {
+		Items []int8 `musthave:"1, 3"`
+	}
+
+	test := testStruct{
+		Items: []int8{1, 2},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Slice element missing required int8 field was not detected")
+	}
+}
+
+func TestSliceMustHaveRequiredFieldFloat64(t *testing.T) {
+
+	type testStruct struct {
+		Items []float64 `musthave:"1.1, 3.3"`
+	}
+
+	test := testStruct{
+		Items: []float64{1.1, 2.2},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Slice element missing required float64 field was not detected")
+	}
+}
+
+func TestSliceMustHaveRequiredFieldFloat32(t *testing.T) {
+
+	type testStruct struct {
+		Items []float32 `musthave:"1.1, 3.3"`
+	}
+
+	test := testStruct{
+		Items: []float32{1.1, 2.2},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Slice element missing required float32 field was not detected")
+	}
+}
+
+func TestSliceAlwaysHasFieldString(t *testing.T) {
+
+	type testStruct struct {
+		Items []string `alwayshas:"item1, item2"`
+	}
+
+	test := testStruct{
+		Items: []string{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice element with empty slice should be valid: %s", err)
+	}
+
+	if len(test.Items) < 2 {
+		t.Errorf("Slice element with alwayshas should have required items")
+	} else {
+		if test.Items[0] != "item1" {
+			t.Errorf("Slice element with alwayshas should have first required item")
+		}
+		if test.Items[1] != "item2" {
+			t.Errorf("Slice element with alwayshas should have second required item")
+		}
+	}
+}
+
+func TestSliceAlwaysHasFieldInt(t *testing.T) {
+
+	type testStruct struct {
+		Items []int `alwayshas:"1, 2"`
+	}
+
+	test := testStruct{
+		Items: []int{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice element with empty slice should be valid: %s", err)
+	}
+
+	if len(test.Items) < 2 {
+		t.Errorf("Slice element with alwayshas should have required items")
+	} else {
+		if test.Items[0] != 1 {
+			t.Errorf("Slice element with alwayshas should have first required item")
+		}
+		if test.Items[1] != 2 {
+			t.Errorf("Slice element with alwayshas should have second required item")
+		}
+	}
+}
+
+func TestSliceAlwaysHasFieldInt8(t *testing.T) {
+
+	type testStruct struct {
+		Items []int8 `alwayshas:"1, 2"`
+	}
+
+	test := testStruct{
+		Items: []int8{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice element with empty slice should be valid: %s", err)
+	}
+
+	if len(test.Items) < 2 {
+		t.Errorf("Slice element with alwayshas should have required items")
+	} else {
+		if test.Items[0] != 1 {
+			t.Errorf("Slice element with alwayshas should have first required item")
+		}
+		if test.Items[1] != 2 {
+			t.Errorf("Slice element with alwayshas should have second required item")
+		}
+	}
+}
+
+func TestSliceAlwaysHasFieldInt16(t *testing.T) {
+
+	type testStruct struct {
+		Items []int16 `alwayshas:"1, 2"`
+	}
+
+	test := testStruct{
+		Items: []int16{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice element with empty slice should be valid: %s", err)
+	}
+
+	if len(test.Items) < 2 {
+		t.Errorf("Slice element with alwayshas should have required items")
+	} else {
+		if test.Items[0] != 1 {
+			t.Errorf("Slice element with alwayshas should have first required item")
+		}
+		if test.Items[1] != 2 {
+			t.Errorf("Slice element with alwayshas should have second required item")
+		}
+	}
+}
+
+func TestSliceAlwaysHasFieldInt32(t *testing.T) {
+
+	type testStruct struct {
+		Items []int32 `alwayshas:"1, 2"`
+	}
+
+	test := testStruct{
+		Items: []int32{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice element with empty slice should be valid: %s", err)
+	}
+
+	if len(test.Items) < 2 {
+		t.Errorf("Slice element with alwayshas should have required items")
+	} else {
+		if test.Items[0] != 1 {
+			t.Errorf("Slice element with alwayshas should have first required item")
+		}
+		if test.Items[1] != 2 {
+			t.Errorf("Slice element with alwayshas should have second required item")
+		}
+	}
+}
+
+func TestSliceAlwaysHasFieldInt64(t *testing.T) {
+
+	type testStruct struct {
+		Items []int64 `alwayshas:"1, 2"`
+	}
+
+	test := testStruct{
+		Items: []int64{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice element with empty slice should be valid: %s", err)
+	}
+
+	if len(test.Items) < 2 {
+		t.Errorf("Slice element with alwayshas should have required items")
+	} else {
+		if test.Items[0] != 1 {
+			t.Errorf("Slice element with alwayshas should have first required item")
+		}
+		if test.Items[1] != 2 {
+			t.Errorf("Slice element with alwayshas should have second required item")
+		}
+	}
+}
+
+func TestSliceAlwaysHasFieldFloat32(t *testing.T) {
+
+	type testStruct struct {
+		Items []float32 `alwayshas:"1.1, 2.2"`
+	}
+
+	test := testStruct{
+		Items: []float32{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice element with empty slice should be valid: %s", err)
+	}
+
+	if len(test.Items) < 2 {
+		t.Errorf("Slice element with alwayshas should have required items")
+	} else {
+		if test.Items[0] != 1.1 {
+			t.Errorf("Slice element with alwayshas should have first required item")
+		}
+		if test.Items[1] != 2.2 {
+			t.Errorf("Slice element with alwayshas should have second required item")
+		}
+	}
+}
+
+func TestSliceAlwaysHasFieldFloat64(t *testing.T) {
+
+	type testStruct struct {
+		Items []float64 `alwayshas:"1.1, 2.2"`
+	}
+
+	test := testStruct{
+		Items: []float64{},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Slice element with empty slice should be valid: %s", err)
+	}
+
+	if len(test.Items) < 2 {
+		t.Errorf("Slice element with alwayshas should have required items")
+	} else {
+		if test.Items[0] != 1.1 {
+			t.Errorf("Slice element with alwayshas should have first required item")
+		}
+		if test.Items[1] != 2.2 {
+			t.Errorf("Slice element with alwayshas should have second required item")
+		}
+	}
+}

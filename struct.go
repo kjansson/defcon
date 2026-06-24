@@ -38,6 +38,10 @@ func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 	if found && !isTrue(unique) {
 		annotations.Unique = false
 	}
+	alwaysHas, found := v.Tag.Lookup("alwayshas")
+	if found {
+		annotations.AlwaysHas = strings.Split(alwaysHas, ",")
+	}
 
 	return &annotations
 }
@@ -108,4 +112,15 @@ func (f *structField) handle(a *annotations) error {
 	}
 
 	return nil
+}
+
+// Finds a string value in an array of strings
+func existsIn(subject []string, searchValue string) bool {
+
+	for _, value := range subject {
+		if value == searchValue {
+			return true
+		}
+	}
+	return false
 }

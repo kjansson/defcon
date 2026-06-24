@@ -72,6 +72,62 @@ func (f *sliceField) handle(a *annotations) error {
 		}
 
 	}
+
+	// Check for musthave fields
+	if len(a.MustHave) > 0 {
+		for _, mustHaveField := range a.MustHave {
+			found := false
+			for i := 0; i < f.field.Len(); i++ {
+				val, err := createTypeFromValue(f.field.Index(i), mustHaveField)
+				if err != nil {
+					return fmt.Errorf("error comparing values: %s", err)
+				}
+				if val == f.field.Index(i) {
+					found = true
+				}
+			}
+			if !found {
+				return fmt.Errorf("field is marked as must have but has no value for field: %s", mustHaveField)
+			}
+		}
+	}
+
+	// Handle alwayshas
+	if len(a.AlwaysHas) > 0 {
+
+		//var ex reflect.Value
+		for _, alwaysHasField := range a.AlwaysHas {
+			found := false
+			for i := 0; i < f.field.Len(); i++ {
+				// fmt.Println("Looking for field:", alwaysHasField, "in slice:", f.field.Index(i))
+				val, err := createTypeFromValue(f.field.Index(i), alwaysHasField)
+				if err != nil {
+					return fmt.Errorf("error comparing values: %s", err)
+				}
+				if val == f.field.Index(i) {
+					found = true
+					fmt.Println("Found")
+				}
+			}
+			if !found {
+
+				// Figure out the type of the slice element
+				elemType := f.field.Type().Elem()
+				for elemType.Kind() == reflect.Ptr {
+					elemType = elemType.Elem()
+				}
+				newPtr := reflect.New(elemType).Elem()
+
+				val, err := createTypeFromValue(newPtr, alwaysHasField)
+				if err != nil {
+					return fmt.Errorf("error comparing values: %s", err)
+				}
+
+				f.field.Set(reflect.Append(f.field, val))
+			}
+		}
+	}
+
 	return nil
 
 }
