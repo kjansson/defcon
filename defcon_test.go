@@ -14,7 +14,7 @@ func TestInt(t *testing.T) {
 
 	test := testStruct{}
 
-	_ = CheckConfigStruct(&test)
+	_ = CheckStruct(&test)
 
 	if test.Val != 127 {
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
@@ -31,7 +31,7 @@ func TestInt8(t *testing.T) {
 
 	test := testStruct{}
 
-	_ = CheckConfigStruct(&test)
+	_ = CheckStruct(&test)
 
 	if test.Val != 127 {
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
@@ -48,7 +48,7 @@ func TestInt16(t *testing.T) {
 
 	test := testStruct{}
 
-	CheckConfigStruct(&test)
+	CheckStruct(&test)
 
 	if test.Val != 127 {
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
@@ -63,7 +63,7 @@ func TestInt32(t *testing.T) {
 		Val int32 `default:"127"`
 	}
 	test := testStruct{}
-	CheckConfigStruct(&test)
+	CheckStruct(&test)
 	if test.Val != 127 {
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
 	}
@@ -76,7 +76,7 @@ func TestInt64(t *testing.T) {
 		Val int64 `default:"127"`
 	}
 	test := testStruct{}
-	CheckConfigStruct(&test)
+	CheckStruct(&test)
 	if test.Val != 127 {
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
 	}
@@ -89,7 +89,7 @@ func TestFloat32(t *testing.T) {
 		Val float32 `default:"127.127"`
 	}
 	test := testStruct{}
-	CheckConfigStruct(&test)
+	CheckStruct(&test)
 	if test.Val != 127.127 {
 		t.Errorf("Default value did not set correctly. Wanted 127.127, got %f", test.Val)
 	}
@@ -102,7 +102,7 @@ func TestFloat64(t *testing.T) {
 		Val float64 `default:"127.127"`
 	}
 	test := testStruct{}
-	CheckConfigStruct(&test)
+	CheckStruct(&test)
 	if test.Val != 127.127 {
 		t.Errorf("Default value did not set correctly. Wanted 127.127, got %f", test.Val)
 	}
@@ -115,7 +115,7 @@ func TestString(t *testing.T) {
 		Val string `default:"test"`
 	}
 	test := testStruct{}
-	CheckConfigStruct(&test)
+	CheckStruct(&test)
 	if test.Val != "test" {
 		t.Errorf("Default value did not set correctly. Wanted 'test', got '%s'", test.Val)
 	}
@@ -128,7 +128,7 @@ func TestBoolTrue(t *testing.T) {
 		Val bool `default:"true"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
@@ -144,7 +144,7 @@ func TestBoolFalse(t *testing.T) {
 		Val bool `default:"false"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
@@ -160,7 +160,7 @@ func TestBoolTRUE(t *testing.T) {
 		Val bool `default:"TRUE"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
@@ -176,7 +176,7 @@ func TestBoolFALSE(t *testing.T) {
 		Val bool `default:"FALSE"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
@@ -192,7 +192,7 @@ func TestBoolMixedCaseTrue(t *testing.T) {
 		Val bool `default:"True"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
@@ -208,7 +208,7 @@ func TestBoolMixedCaseFalse(t *testing.T) {
 		Val bool `default:"False"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
@@ -224,7 +224,7 @@ func TestRequiredBool(t *testing.T) {
 		Val bool `required:"true"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Required boolean field was not required")
 	}
@@ -237,7 +237,7 @@ func TestInvalidBoolean(t *testing.T) {
 		Val bool `default:"notabool"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Invalid boolean tag value was not detected")
 	}
@@ -256,7 +256,7 @@ func TestEnvVarBool(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err = CheckConfigStruct(&test)
+	err = CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Env var bool not handled correctly: %s", err)
 	}
@@ -277,7 +277,7 @@ func TestBoolAlreadySetTrue(t *testing.T) {
 		Val bool `default:"false"`
 	}
 	test := testStruct{Val: true}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean handling failed: %s", err)
 	}
@@ -293,7 +293,7 @@ func TestRequiredString(t *testing.T) {
 		Val string `required:"true"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Required field was not required: %s", err)
 	}
@@ -306,7 +306,7 @@ func TestRequiredInteger(t *testing.T) {
 		Val int `required:"true"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Required field was not required: %s", err)
 	}
@@ -319,7 +319,7 @@ func TestInvalidNumerical(t *testing.T) {
 		Val int `default:"somevalue"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Invalid numerical tag value was not detected: %s", err)
 	}
@@ -332,7 +332,7 @@ func TestOverflowingNumerical(t *testing.T) {
 		Val int8 `default:"555"`
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Overflowing numerical tag value was not detected. %s", err)
 	}
@@ -347,7 +347,22 @@ func TestRequires(t *testing.T) {
 		Val3 string
 	}
 	test := testStruct{Val1: "set"}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
+	if err == nil {
+		t.Errorf("Field required by other not detected. %s", err)
+	}
+}
+
+// Test detection of field requiring other field but main field is empty
+func TestRequiresPrimaryEmpty(t *testing.T) {
+
+	type testStruct struct {
+		Val1 string `requires:"Val2"`
+		Val2 string
+		Val3 string
+	}
+	test := testStruct{}
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Field required by other not detected. %s", err)
 	}
@@ -362,7 +377,7 @@ func TestRequiresMultiple(t *testing.T) {
 		Val3 string
 	}
 	test := testStruct{Val1: "set"}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Fields required by other not detected. %s", err)
 	}
@@ -381,14 +396,14 @@ func TestRequiresNestedStruct(t *testing.T) {
 
 	// First, test empty value in field that requires other field. This should result in an error.
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Validating required empty struct failed.")
 	}
 	// Second, test with set values, this should work
 	test.Val1 = "set"
 	test.Nested.NVal1 = "set"
-	err = CheckConfigStruct(&test)
+	err = CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Validating required nested struct failed.")
 	}
@@ -403,7 +418,7 @@ func TestRequiresVarSyntax(t *testing.T) {
 		Val3 string
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Illegal characters in field name not detected: %s", err)
 	}
@@ -420,7 +435,7 @@ func TestNestedStruct(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Nested struct not checked correctly. %s", err)
 	}
@@ -439,7 +454,7 @@ func TestUnexported(t *testing.T) {
 		val1 string `default:"test"` // Unexported field
 	}
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Unexported field not handled correctly. %s", err)
 	}
@@ -455,7 +470,7 @@ func TestStringArray(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Default array value not handled correctly. %s", err)
 	}
@@ -474,7 +489,7 @@ func TestIntArray(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Default array value not handled correctly. %s", err)
 	}
@@ -492,7 +507,7 @@ func TestInt8Array(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Default array value not handled correctly. %s", err)
 	}
@@ -510,7 +525,7 @@ func TestInt16Array(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Default array value not handled correctly. %s", err)
 	}
@@ -528,7 +543,7 @@ func TestInt32Array(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Default array value not handled correctly. %s", err)
 	}
@@ -546,7 +561,7 @@ func TestInt64Array(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Default array value not handled correctly. %s", err)
 	}
@@ -565,7 +580,7 @@ func TestFloat32Array(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Default array value not handled correctly. %s", err)
 	}
@@ -584,7 +599,7 @@ func TestFloat64Array(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Default array value not handled correctly. %s", err)
 	}
@@ -603,7 +618,7 @@ func TestWrongTypeArray(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Wrong type array not handled correctly. %s", err)
 	}
@@ -621,7 +636,7 @@ func TestEnvVarWithoutDefault(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err = CheckConfigStruct(&test)
+	err = CheckStruct(&test)
 	if test.Val1 != "test" {
 		t.Errorf("Env var without default not handled correctly. %s", err)
 	}
@@ -639,7 +654,7 @@ func TestEnvVarWithDefault(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if test.Val1 != "test" {
 		t.Errorf("Env var with default not handled correctly. %s", err)
 	}
@@ -657,7 +672,7 @@ func TestEnvVarInteger(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err = CheckConfigStruct(&test)
+	err = CheckStruct(&test)
 	if test.Val1 != 123 {
 		t.Errorf("Env var with default not handled correctly. %s", err)
 	}
@@ -680,7 +695,7 @@ func TestEnvVarFloat(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err = CheckConfigStruct(&test)
+	err = CheckStruct(&test)
 	if test.Val1 != 123.123 {
 		t.Errorf("Env var with default not handled correctly. %s", err)
 	}
@@ -703,7 +718,7 @@ func TestEnvVarSlice(t *testing.T) {
 	}
 
 	test := testStruct{}
-	err = CheckConfigStruct(&test)
+	err = CheckStruct(&test)
 
 	if test.arr[0] != "test1" {
 		t.Errorf("Env var with default not handled correctly. %s", err)
@@ -737,7 +752,7 @@ func TestSliceOfStructs(t *testing.T) {
 		},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice of structs not handled correctly: %s", err)
 	}
@@ -784,7 +799,7 @@ func TestSliceOfStructsWithRequired(t *testing.T) {
 		},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Required field in slice element was not caught")
 	}
@@ -797,7 +812,7 @@ func TestSliceOfStructsWithRequired(t *testing.T) {
 		},
 	}
 
-	err = CheckConfigStruct(&test2)
+	err = CheckStruct(&test2)
 	if err != nil {
 		t.Errorf("Valid slice of structs with required fields failed: %s", err)
 	}
@@ -817,7 +832,7 @@ func TestRequiredSliceOfStructs(t *testing.T) {
 		Items: []nestedStruct{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Required empty slice was not caught")
 	}
@@ -829,7 +844,7 @@ func TestRequiredSliceOfStructs(t *testing.T) {
 		},
 	}
 
-	err = CheckConfigStruct(&test2)
+	err = CheckStruct(&test2)
 	if err != nil {
 		t.Errorf("Valid required slice failed: %s", err)
 	}
@@ -854,7 +869,7 @@ func TestSliceOfNestedStructs(t *testing.T) {
 		},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Deeply nested structs in slice not handled correctly: %s", err)
 	}
@@ -884,7 +899,7 @@ func TestSliceOfStructsWithBool(t *testing.T) {
 		},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice of structs with bool not handled correctly: %s", err)
 	}
@@ -924,7 +939,7 @@ func TestSliceOfStructsWithBoolLimitation(t *testing.T) {
 		},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -948,7 +963,7 @@ func TestEmptySliceOfStructs(t *testing.T) {
 		Items: []nestedStruct{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Empty slice of structs should be valid: %s", err)
 	}
@@ -964,7 +979,7 @@ func TestSliceMustHaveRequiredFieldString(t *testing.T) {
 		Items: []string{"item1", "item3"},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Slice element missing required string field was not detected")
 	}
@@ -980,7 +995,7 @@ func TestSliceMustHaveRequiredFieldInt(t *testing.T) {
 		Items: []int{1, 2},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Slice element missing required int field was not detected")
 	}
@@ -996,7 +1011,7 @@ func TestSliceMustHaveRequiredFieldInt8(t *testing.T) {
 		Items: []int8{1, 2},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Slice element missing required int8 field was not detected")
 	}
@@ -1012,7 +1027,7 @@ func TestSliceMustHaveRequiredFieldFloat64(t *testing.T) {
 		Items: []float64{1.1, 2.2},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Slice element missing required float64 field was not detected")
 	}
@@ -1028,7 +1043,7 @@ func TestSliceMustHaveRequiredFieldFloat32(t *testing.T) {
 		Items: []float32{1.1, 2.2},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Slice element missing required float32 field was not detected")
 	}
@@ -1044,7 +1059,7 @@ func TestSliceAlwaysHasFieldString(t *testing.T) {
 		Items: []string{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice element with empty slice should be valid: %s", err)
 	}
@@ -1071,7 +1086,7 @@ func TestSliceAlwaysHasFieldInt(t *testing.T) {
 		Items: []int{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice element with empty slice should be valid: %s", err)
 	}
@@ -1098,7 +1113,7 @@ func TestSliceAlwaysHasFieldInt8(t *testing.T) {
 		Items: []int8{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice element with empty slice should be valid: %s", err)
 	}
@@ -1125,7 +1140,7 @@ func TestSliceAlwaysHasFieldInt16(t *testing.T) {
 		Items: []int16{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice element with empty slice should be valid: %s", err)
 	}
@@ -1152,7 +1167,7 @@ func TestSliceAlwaysHasFieldInt32(t *testing.T) {
 		Items: []int32{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice element with empty slice should be valid: %s", err)
 	}
@@ -1179,7 +1194,7 @@ func TestSliceAlwaysHasFieldInt64(t *testing.T) {
 		Items: []int64{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice element with empty slice should be valid: %s", err)
 	}
@@ -1206,7 +1221,7 @@ func TestSliceAlwaysHasFieldFloat32(t *testing.T) {
 		Items: []float32{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice element with empty slice should be valid: %s", err)
 	}
@@ -1233,7 +1248,7 @@ func TestSliceAlwaysHasFieldFloat64(t *testing.T) {
 		Items: []float64{},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice element with empty slice should be valid: %s", err)
 	}
@@ -1260,7 +1275,7 @@ func TestStringMustMatch(t *testing.T) {
 		Val: "testValue",
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("String field with mustmatch should be valid: %s", err)
 	}
@@ -1276,7 +1291,7 @@ func TestSliceMustMatch(t *testing.T) {
 		Val: []string{"testValue", "testAnother"},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("String field with mustmatch should be valid: %s", err)
 	}
@@ -1292,7 +1307,7 @@ func TestStringMustNotMatch(t *testing.T) {
 		Val: "testValue",
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("String field with mustnotmatch should be valid: %s", err)
 	}
@@ -1308,7 +1323,7 @@ func TestSliceMustNotMatch(t *testing.T) {
 		Val: []string{"testValue", "testAnother"},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Slice field with mustnotmatch should be valid: %s", err)
 	}
@@ -1324,7 +1339,7 @@ func TestSliceUniqueString(t *testing.T) {
 		Val: []string{"foo", "foo"},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Slice field with duplicate values should not be valid")
 	}
@@ -1340,7 +1355,7 @@ func TestSliceUniqueInt(t *testing.T) {
 		Val: []int{1, 1},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Slice field with duplicate values should not be valid")
 	}
@@ -1356,8 +1371,38 @@ func TestSliceUniqueFloat32(t *testing.T) {
 		Val: []float32{1.1, 1.1},
 	}
 
-	err := CheckConfigStruct(&test)
+	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Slice field with duplicate values should not be valid")
 	}
+}
+
+func TestDefaultAndMustMatch(t *testing.T) {
+
+	type valid struct {
+		Val string `default:"testValue" mustmatch:"^test.*"`
+	}
+
+	v := valid{
+		Val: "notmatching",
+	}
+
+	err := CheckStruct(&v)
+	if err == nil {
+		t.Errorf("String field with default and mustmatch should not be valid")
+	}
+
+	type invalid struct {
+		Val string `default:"foo" mustmatch:"^test.*"`
+	}
+
+	iv := invalid{
+		Val: "notmatching",
+	}
+
+	err = CheckStruct(&iv)
+	if err == nil {
+		t.Errorf("String field with default and mustmatch should not be valid")
+	}
+
 }
