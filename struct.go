@@ -3,6 +3,7 @@ package defcon
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"unsafe"
 )
@@ -64,13 +65,14 @@ func (f *structField) handle(a *annotations) error {
 		a = f.getAnnotations(f.field.Type().Field(0))
 	}
 
-	// Manage required
-	if a.Required {
-		if f.field.IsZero() {
-			// Return an error if the field is required but has no value
-			return fmt.Errorf("field is marked as required but has no value")
-		}
-	}
+	// Redundant??
+	// // Manage required
+	// if a.Required {
+	// 	if f.field.IsZero() {
+	// 		// Return an error if the field is required but has no value
+	// 		return fmt.Errorf("field is marked as required but has no value")
+	// 	}
+	// }
 
 	// Check which fields are set in the struct
 	setFields := []string{}
@@ -82,34 +84,36 @@ func (f *structField) handle(a *annotations) error {
 		}
 	}
 
-	// Handle struct fields recursively
+	// Handle struct recursively
 	for i := 0; i < f.field.NumField(); i++ {
 
-		//setFields := []string{}
-		var tmpField reflect.Value
+		var subField reflect.Value
 		v := f.field.Field(i)
-		//name := f.field.Type().Field(i).Name
 
 		if !f.field.Type().Field(i).IsExported() {
-			tmpField = reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem() // Get access to unexported field
+			subField = reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem() // Get access to unexported field
 		} else {
-			tmpField = v
+			subField = v
 		}
-
-		subField := tmpField
 
 		fieldType, err := getType(subField)
 		if err != nil {
 			return fmt.Errorf("failed to get field type: %v", err)
 		}
 
+		// Get annotations for the current field
 		annotations := f.getAnnotations(f.field.Type().Field(i))
 
-		// Check if the field has a "requires" tag and validate it
-		if annotations.RequiresField != "" {
+		// Check if the field has a "requires" tag and validate that it is set if the current field is set
+		if annotations.RequiresField != "" && !subField.IsZero() {
+
 			requiredFields := strings.Split(annotations.RequiresField, ",")
 			for _, requiredField := range requiredFields {
 				requiredField = strings.TrimSpace(requiredField)
+				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(requiredField) // Check if name of required field is valid
+				if !match {
+					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", requiredField, f.field.Type().Field(i).Name)
+				}
 				if !existsIn(setFields, requiredField) {
 					return fmt.Errorf("field %s requires field %s to be set", f.field.Type().Field(i).Name, requiredField)
 				}

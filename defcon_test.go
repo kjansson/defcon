@@ -363,8 +363,8 @@ func TestRequiresPrimaryEmpty(t *testing.T) {
 	}
 	test := testStruct{}
 	err := CheckStruct(&test)
-	if err == nil {
-		t.Errorf("Field required by other not detected. %s", err)
+	if err != nil {
+		t.Errorf("Field requires other field but is not set. %s", err)
 	}
 }
 
@@ -397,7 +397,7 @@ func TestRequiresNestedStruct(t *testing.T) {
 	// First, test empty value in field that requires other field. This should result in an error.
 	test := testStruct{}
 	err := CheckStruct(&test)
-	if err == nil {
+	if err != nil {
 		t.Errorf("Validating required empty struct failed.")
 	}
 	// Second, test with set values, this should work
@@ -417,7 +417,9 @@ func TestRequiresVarSyntax(t *testing.T) {
 		Val2 string
 		Val3 string
 	}
-	test := testStruct{}
+	test := testStruct{
+		Val1: "set",
+	}
 	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Illegal characters in field name not detected: %s", err)
