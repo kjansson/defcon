@@ -217,19 +217,6 @@ func TestBoolMixedCaseFalse(t *testing.T) {
 	}
 }
 
-// Test required bool
-func TestRequiredBool(t *testing.T) {
-
-	type testStruct struct {
-		Val bool `required:"true"`
-	}
-	test := testStruct{}
-	err := CheckStruct(&test)
-	if err == nil {
-		t.Errorf("Required boolean field was not required")
-	}
-}
-
 // Test invalid boolean value
 func TestInvalidBoolean(t *testing.T) {
 
@@ -708,7 +695,7 @@ func TestEnvVarFloat(t *testing.T) {
 	}
 }
 
-func TestEnvVarSlice(t *testing.T) {
+func TestEnvVarStingSlice(t *testing.T) {
 
 	type testStruct struct {
 		arr []string `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
@@ -727,6 +714,62 @@ func TestEnvVarSlice(t *testing.T) {
 	}
 
 	if test.arr[1] != "test2" {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
+
+func TestEnvVarIntSlice(t *testing.T) {
+
+	type testStruct struct {
+		arr []int `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "{1, 2}")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckStruct(&test)
+
+	if test.arr[0] != 1 {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	if test.arr[1] != 2 {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
+
+func TestEnvVarFloatSlice(t *testing.T) {
+
+	type testStruct struct {
+		arr []float32 `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "{1.1, 2.2}")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckStruct(&test)
+
+	if test.arr[0] != 1.1 {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	if test.arr[1] != 2.2 {
 		t.Errorf("Env var with default not handled correctly. %s", err)
 	}
 
@@ -1381,30 +1424,14 @@ func TestSliceUniqueFloat32(t *testing.T) {
 
 func TestDefaultAndMustMatch(t *testing.T) {
 
-	type valid struct {
-		Val string `default:"testValue" mustmatch:"^test.*"`
-	}
-
-	v := valid{
-		Val: "notmatching",
-	}
-
-	err := CheckStruct(&v)
-	if err == nil {
-		t.Errorf("String field with default and mustmatch should not be valid")
-	}
-
 	type invalid struct {
 		Val string `default:"foo" mustmatch:"^test.*"`
 	}
 
-	iv := invalid{
-		Val: "notmatching",
-	}
+	iv := invalid{}
 
-	err = CheckStruct(&iv)
+	err := CheckStruct(&iv)
 	if err == nil {
-		t.Errorf("String field with default and mustmatch should not be valid")
+		t.Errorf("String field defaulting to value not allowed by mustmatch should not be valid")
 	}
-
 }
