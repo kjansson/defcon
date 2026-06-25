@@ -1300,32 +1300,32 @@ func TestSliceMustMatch(t *testing.T) {
 func TestStringMustNotMatch(t *testing.T) {
 
 	type testStruct struct {
-		Val string `mustnotmatch:"^test.*"`
+		Val string `mustnotmatch:"^foo.*"`
 	}
 
 	test := testStruct{
-		Val: "testValue",
+		Val: "foo",
 	}
 
 	err := CheckStruct(&test)
-	if err != nil {
-		t.Errorf("String field with mustnotmatch should be valid: %s", err)
+	if err == nil {
+		t.Errorf("String field with mustnotmatch should not be valid")
 	}
 }
 
 func TestSliceMustNotMatch(t *testing.T) {
 
 	type testStruct struct {
-		Val []string `mustnotmatch:"^test.*"`
+		Val []string `mustnotmatch:"^foo.*"`
 	}
 
 	test := testStruct{
-		Val: []string{"testValue", "testAnother"},
+		Val: []string{"foo", "bar"},
 	}
 
 	err := CheckStruct(&test)
-	if err != nil {
-		t.Errorf("Slice field with mustnotmatch should be valid: %s", err)
+	if err == nil {
+		t.Errorf("Slice field with mustnotmatch should not be valid")
 	}
 }
 

@@ -15,10 +15,10 @@ func (f *structField) new(v *reflect.Value) {
 	f.field = *v
 }
 
+// getAnnotations retrieves the annotations for a struct field
 func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 	var annotations annotations
 
-	// fmt.Println("yay")
 	required, found := v.Tag.Lookup("required")
 	if found && isTrue(required) {
 		annotations.Required = true
@@ -48,7 +48,7 @@ func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 	}
 	mustNotMatch, found := v.Tag.Lookup("mustnotmatch")
 	if found {
-		annotations.MustMatch = mustNotMatch
+		annotations.MustNotMatch = mustNotMatch
 	}
 	unique, found = v.Tag.Lookup("unique")
 	if found && isTrue(unique) {
