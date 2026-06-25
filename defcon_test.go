@@ -1435,3 +1435,39 @@ func TestDefaultAndMustMatch(t *testing.T) {
 		t.Errorf("String field defaulting to value not allowed by mustmatch should not be valid")
 	}
 }
+
+func TestCustomErrorMessageRequired(t *testing.T) {
+
+	type invalid struct {
+		Val string `required:"true" errormsg:"Val is required and cannot be empty"`
+	}
+
+	iv := invalid{}
+
+	err := CheckStruct(&iv)
+	if err == nil {
+		t.Errorf("Custom error message should be returned for invalid struct")
+	}
+	if err.Error() != "Val is required and cannot be empty" {
+		t.Errorf("Custom error message not returned correctly. Got: %s", err.Error())
+	}
+}
+
+func TestCustomErrorMessageMustMatch(t *testing.T) {
+
+	type invalid struct {
+		Val string `mustmatch:"^test.*" errormsg:"Val must match the pattern ^test.*"`
+	}
+
+	iv := invalid{
+		Val: "foo",
+	}
+
+	err := CheckStruct(&iv)
+	if err == nil {
+		t.Errorf("Custom error message should be returned for invalid struct")
+	}
+	if err.Error() != "Val must match the pattern ^test.*" {
+		t.Errorf("Custom error message not returned correctly. Got: %s", err.Error())
+	}
+}

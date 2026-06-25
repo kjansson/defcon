@@ -55,6 +55,10 @@ func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 	if found && isTrue(unique) {
 		annotations.Unique = true
 	}
+	errMsg, found := v.Tag.Lookup("errormsg")
+	if found {
+		annotations.ErrorMsg = errMsg
+	}
 
 	return &annotations
 }
@@ -64,15 +68,6 @@ func (f *structField) handle(a *annotations) error {
 	if a == nil {
 		a = f.getAnnotations(f.field.Type().Field(0))
 	}
-
-	// Redundant??
-	// // Manage required
-	// if a.Required {
-	// 	if f.field.IsZero() {
-	// 		// Return an error if the field is required but has no value
-	// 		return fmt.Errorf("field is marked as required but has no value")
-	// 	}
-	// }
 
 	// Check which fields are set in the struct
 	setFields := []string{}
@@ -115,6 +110,10 @@ func (f *structField) handle(a *annotations) error {
 					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", requiredField, f.field.Type().Field(i).Name)
 				}
 				if !existsIn(setFields, requiredField) {
+					// Use custom error message if provided in the annotations
+					if annotations.ErrorMsg != "" {
+						return fmt.Errorf("%s", annotations.ErrorMsg)
+					}
 					return fmt.Errorf("field %s requires field %s to be set", f.field.Type().Field(i).Name, requiredField)
 				}
 			}
@@ -124,6 +123,10 @@ func (f *structField) handle(a *annotations) error {
 		fieldType.new(&subField)
 		err = fieldType.handle(annotations)
 		if err != nil {
+			// Use custom error message if provided in the annotations
+			if annotations.ErrorMsg != "" {
+				return fmt.Errorf("%s", annotations.ErrorMsg)
+			}
 			return err
 		}
 	}

@@ -16,6 +16,7 @@ type annotations struct {
 	MustNotMatch     string
 	MustHave         []string
 	AlwaysHas        []string
+	ErrorMsg         string
 }
 
 type field interface {
