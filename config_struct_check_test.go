@@ -1313,3 +1313,51 @@ func TestSliceMustNotMatch(t *testing.T) {
 		t.Errorf("Slice field with mustnotmatch should be valid: %s", err)
 	}
 }
+
+func TestSliceUniqueString(t *testing.T) {
+
+	type testStruct struct {
+		Val []string `unique:"true"`
+	}
+
+	test := testStruct{
+		Val: []string{"foo", "foo"},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Slice field with duplicate values should not be valid")
+	}
+}
+
+func TestSliceUniqueInt(t *testing.T) {
+
+	type testStruct struct {
+		Val []int `unique:"true"`
+	}
+
+	test := testStruct{
+		Val: []int{1, 1},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Slice field with duplicate values should not be valid")
+	}
+}
+
+func TestSliceUniqueFloat32(t *testing.T) {
+
+	type testStruct struct {
+		Val []float32 `unique:"true"`
+	}
+
+	test := testStruct{
+		Val: []float32{1.1, 1.1},
+	}
+
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Slice field with duplicate values should not be valid")
+	}
+}

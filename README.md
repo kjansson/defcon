@@ -6,12 +6,46 @@ defcon is a minimalistic library that parses structs tags, allowing you to tag f
 
 Currently supported types for tagging are all ints, floats and strings and slices. Structs are supported using the `required` and `requires` tags. The struct being parsed can be nested.
 
+## Supported annotations
+
+| Annotation | Example | Target types | Check type | Behaviour |
+|:---|:---|:---|:---|:---|
+| default | `default:"foo"`<br>`default:"{foo, bar}"` | primitives, slices of primitive | correcting | Replaces value if field has type default. |
+| required | `required:"true"` | primitives, slices | validating | Returns an error if field has the type default. |
+| requires | `requires:"field1, field2"` | any struct field | validating | Returns error if field is not type default and any of the given fields has type default. |
+| env | `env:"ENV_VAR_FOO"` | primitives | altering | Tries to set the field with the value of the given environment variable if found, overwriting the value. |
+| defaultfrom | `defaultfrom:"fieldFoo"` | primitives | correcting | Replaces value with the value of another field if annotated field has type default. |
+| mustmatch | `mustmatch:"$foo.*^` | strings, slices of strings | validating | Matches the field(s) against the given regular expression, returns error if not matching. |
+| mustnotmatch | `mustnotmatch:"$foo.*^` | strings, slices of strings | validating | Matches the field(s) against the given regular expression, returns error if matching. |
+| alwayshas | `alwayshas:"foo, bar"` | slices of primitives | correcting | Ensures that a slice always contains the given elements. If not present in the slice they will be appended to it. |
+
+
 Supported tags are;  
 `default:"<value>"` for primitive types  
 `default:"{foo, bar, ...}"` for slices  
 `required:"<true|TRUE>"`  
 `requires:"field1, field2, ..."`  
-`env:"<envvar_name>"`  
+`env:"<envvar_name>"`
+`defaultfrom` for promitive types
+`requiresField` for struct fields
+`unique` for slices
+`mustmatch` for strings and string slices
+´mustnotmatch´ for strings and string slices
+´musthave´ for string slices
+´alwayshas´ for string slices
+
+	Required         bool
+	DefaultValue     string
+	DefaultFromField string
+	RequiresField    string
+	EnvVarName       string
+	Unique           bool
+	OneOf            string
+	MustMatch        string
+	MustNotMatch     string
+	MustHave         []string // Redundant
+	AlwaysHas        []string
+
 
 ## Behaviour
 The `default` tag will modify the tagged struct field with the given value, if its original value is the primitive type default, i.e. zero for numerical values, zero length string, or zero length slice.  

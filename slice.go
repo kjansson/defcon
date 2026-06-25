@@ -153,6 +153,17 @@ func (f *sliceField) handle(a *annotations) error {
 		}
 	}
 
+	if a.Unique && f.field.Len() > 0 {
+		seen := make(map[interface{}]bool)
+		for i := 0; i < f.field.Len(); i++ {
+			val := f.field.Index(i).Interface()
+			if seen[val] {
+				return fmt.Errorf("field value '%v' is not unique", val)
+			}
+			seen[val] = true
+		}
+	}
+
 	return nil
 
 }

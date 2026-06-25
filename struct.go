@@ -50,6 +50,10 @@ func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 	if found {
 		annotations.MustMatch = mustNotMatch
 	}
+	unique, found = v.Tag.Lookup("unique")
+	if found && isTrue(unique) {
+		annotations.Unique = true
+	}
 
 	return &annotations
 }
