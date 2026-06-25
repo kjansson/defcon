@@ -120,6 +120,7 @@ func (f *structField) handle(a *annotations) error {
 			}
 		}
 
+		// Handle the field based on its type
 		fieldType.new(&subField)
 		err = fieldType.handle(annotations)
 		if err != nil {

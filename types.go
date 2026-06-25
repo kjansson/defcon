@@ -14,7 +14,7 @@ type annotations struct {
 	OneOf            string
 	MustMatch        string
 	MustNotMatch     string
-	MustHave         []string // Redundant
+	MustHave         []string
 	AlwaysHas        []string
 }
 
@@ -41,8 +41,3 @@ func getType(v reflect.Value) (field, error) {
 		return nil, nil
 	}
 }
-
-// alwayshas check
-// mustmatch check
-// mustnotmatch check
-// mustnothave

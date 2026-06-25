@@ -28,10 +28,12 @@ func (f *sliceField) handle(a *annotations) error {
 				if element.CanAddr() {
 					elementPtr = element.Addr().Elem()
 				}
+				// Determine the type of the slice element
 				fieldType, err := getType(elementPtr)
 				if err != nil {
 					return fmt.Errorf("failed to get field type: %v", err)
 				}
+				// Handle the field based on its type
 				fieldType.new(&elementPtr)
 				err = fieldType.handle(nil)
 				if err != nil {
@@ -39,13 +41,9 @@ func (f *sliceField) handle(a *annotations) error {
 				}
 			}
 		}
-		// Deny
-		if f.field.Len() == 0 {
-			return fmt.Errorf("field is marked as required but has no value")
-		}
 	} else {
 
-		// Manage required
+		// Manage env var, default, required for non-struct slices
 		if a.EnvVarName != "" && f.field.IsZero() {
 			envValue, found := os.LookupEnv(a.EnvVarName)
 			if found {
@@ -55,15 +53,12 @@ func (f *sliceField) handle(a *annotations) error {
 				}
 			}
 		}
+
+		// Handle default values
 		if a.DefaultValue != "" && f.field.IsZero() {
 			err := setValue(&f.field, a.DefaultValue)
 			if err != nil {
 				return fmt.Errorf("failed to set default value: %v", err)
-			}
-		} else if a.Required {
-			if f.field.IsZero() {
-				// Return an error if the field is required but has no value
-				return fmt.Errorf("field is marked as required but has no value")
 			}
 		}
 
@@ -129,6 +124,7 @@ func (f *sliceField) handle(a *annotations) error {
 		}
 	}
 
+	// Handle mustmatch
 	if a.MustMatch != "" && f.field.Len() > 0 {
 		regex, err := regexp.Compile(a.MustMatch)
 		if err != nil {
@@ -141,6 +137,7 @@ func (f *sliceField) handle(a *annotations) error {
 		}
 	}
 
+	// Handle mustnotmatch
 	if a.MustNotMatch != "" && f.field.Len() > 0 {
 		regex, err := regexp.Compile(a.MustNotMatch)
 		if err != nil {
@@ -153,6 +150,7 @@ func (f *sliceField) handle(a *annotations) error {
 		}
 	}
 
+	// Handle unique values
 	if a.Unique && f.field.Len() > 0 {
 		seen := make(map[interface{}]bool)
 		for i := 0; i < f.field.Len(); i++ {
@@ -165,5 +163,4 @@ func (f *sliceField) handle(a *annotations) error {
 	}
 
 	return nil
-
 }

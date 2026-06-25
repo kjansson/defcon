@@ -17,7 +17,7 @@ func (f *stringField) new(v *reflect.Value) {
 
 func (f *stringField) handle(a *annotations) error {
 
-	// Manage required
+	// Lookup environment variable if specified and field is empty
 	if a.EnvVarName != "" && f.field.IsZero() {
 		envValue, found := os.LookupEnv(a.EnvVarName)
 		if found {
@@ -27,18 +27,24 @@ func (f *stringField) handle(a *annotations) error {
 			}
 		}
 	}
+
+	// Mangage default value
 	if a.DefaultValue != "" && f.field.IsZero() {
 		err := setValue(&f.field, a.DefaultValue)
 		if err != nil {
 			return fmt.Errorf("failed to set default value: %v", err)
 		}
-	} else if a.Required {
+	}
+
+	// Manage required
+	if a.Required {
 		if f.field.IsZero() {
 			// Return an error if the field is required but has no value
 			return fmt.Errorf("field is marked as required but has no value")
 		}
 	}
 
+	// Manage mustmatch
 	if a.MustMatch != "" && !f.field.IsZero() {
 		regex, err := regexp.Compile(a.MustMatch)
 		if err != nil {
@@ -49,6 +55,7 @@ func (f *stringField) handle(a *annotations) error {
 		}
 	}
 
+	// Manage mustnotmatch
 	if a.MustNotMatch != "" && !f.field.IsZero() {
 		regex, err := regexp.Compile(a.MustNotMatch)
 		if err != nil {
