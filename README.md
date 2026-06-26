@@ -3,7 +3,9 @@ Minimalistic library for parsing tagged config structs, handling default values,
 
 ## Overview
 defcon is a minimalistic library that validates and alters struct values using instructions from annotations. It was created to ease the pain and repetative nature of validating config structs.  
+Handling default, required, valid and externally fetched values in large structs can cause massive bloat. With defcon you can handle all of this with a simple function call and visible and readable annotations on the struct.
 
+Example - manual validation;
 ```
 type config struct {
 	required string
@@ -17,7 +19,7 @@ func main() {
 	c := config{}
 
 	if required == "" {
-		panic("Required value not set")
+		panic("this value must be set and i need to explain why")
 	}
 
 	regex, err := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
@@ -25,9 +27,8 @@ func main() {
 		return fmt.Errorf("failed to compile regex: %v", err)
 	}
 	
-	
 	if !regex.MatchString(c.email) {
-		panic("Not a valid pattern")
+		panic("not a valid email")
 	}
 
 	if c.foo == "" {
@@ -45,12 +46,13 @@ func main() {
 }
 ```
 
+Can be handled using annotations;
 ```
 import "github.com/kjansson/defcon"
 
 type config struct {
-	required string `required:"true"`
-	email string `mustmatch:"^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$"`
+	required string `required:"true" errormsg:"this value must be set and i need to explain why"`
+	email string `mustmatch:"^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$" errormsg:"not a valid email address"`
 	foo string `default:"default value"`
 	bar int `default:"42"`
 	env string `env`:"FOO_BAR"
@@ -68,17 +70,17 @@ func main() {
 
 ## Supported annotations
 
-| Annotation | Example | Target types | Check type | Behaviour |
+| Annotation | Example | Target types | Action | Behaviour |
 |:---|:---|:---|:---|:---|
-| default | `default:"foo"`<br>`default:"{foo, bar}"` | primitives, slices of primitive | correcting | Replaces value if field has type default. |
-| required | `required:"true"` | primitives, slices | validating | Returns an error if field has the type default. |
-| requires | `requires:"field1, field2"` | any struct field | validating | Returns error if field is not type default and any of the given fields has type default. |
+| default | `default:"foo"`<br>`default:"{foo, bar}"` | primitives, slices of primitive | correcting | Replaces value if field is unset. |
+| required | `required:"true"` | primitives, slices | validating | Returns an error if field is unset. |
+| requires | `requires:"field1, field2"` | any struct field | validating | Returns error if field is not unset and any of the given required fields are unset. |
 | env | `env:"ENV_VAR_FOO"` | primitives, slices of primitives | altering | Tries to set the field with the value of the given environment variable if found, overwriting the value. |
-| defaultfrom | `defaultfrom:"fieldFoo"` | primitives | correcting | Replaces value with the value of another field if annotated field has type default. |
+| defaultfrom | `defaultfrom:"fieldFoo"` | primitives | correcting | Replaces value with the value of another field if annotated field is unset. |
 | mustmatch | `mustmatch:"$foo.*^` | strings, slices of strings | validating | Matches the field(s) against the given regular expression, returns error if not matching. |
 | mustnotmatch | `mustnotmatch:"$foo.*^` | strings, slices of strings | validating | Matches the field(s) against the given regular expression, returns error if matching. |
 | alwayshas | `alwayshas:"foo, bar"` | slices of primitives | correcting | Ensures that a slice always contains a set of given elements. If not present in the slice they will be appended to it. |
-
+| errormsg | `errormsg:"custom error"` | any, in combination with validating annotation | informing | When used with a validating annotation, any validation error will use this error message. |
 ## Behaviour
 - Values from environment variables will be applied before defaults.
 - Values from defaults and environment variables takes precedence, i.e. a `required` field as with a `default` value will always be filled in and the `required` check will never fail.
@@ -86,53 +88,3 @@ func main() {
 ## Documentation
 https://pkg.go.dev/github.com/kjansson/defcon
 
-## Example
-
-```
-package main
-
-import (
-	"fmt"
-
-	defcon "github.com/kjansson/defcon"
-)
-
-type networkConfig struct {
-	Protocol string
-}
-
-type config struct {
-	Address  string   `default:"localhost"`
-	Port     int      `default:"8080" requires:"Network"`
-	User     string   `required:"true"`
-	Password string   `required:"true"`
-	Network  networkConfig	// Implicitly required by field Port
-	Options  []string `default:"{foo, bar}"`
-	Name     string   `env:"APP_NAME"`
-}
-
-func main() {
-
-	_ = os.Setenv("APP_NAME", "myapp") // For illustration purposes, this would normally be set outside of the code 
-
-	configuration := config{}
-	// Fails if these are empty
-	configuration.User = "user"
-	configuration.Password = "qwerty"
-	configuration.Network.Protocol = "HTTP"	// Field "Port" also requires the field "Network" which has to have set fields. 
-
-	err := defcon.CheckConfigStruct(&configuration)
-	if err != nil {
-		fmt.Println("Parsing error:", err)
-	}
-
-	fmt.Println(configuration.Address) 	// Output: "localhost"
-	fmt.Println(configuration.Port)    	// Output: "8080"
-	fmt.Println(configuration.Options)	// Output: "[foo bar]"
-	fmt.Println(configuration.Name)     // Output: "myapp"
-
-}
-```
-
-Try it out!  
-https://go.dev/play/p/6sIpyODLlv7

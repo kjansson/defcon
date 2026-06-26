@@ -55,6 +55,10 @@ func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 	if found && isTrue(unique) {
 		annotations.Unique = true
 	}
+	validRange, found := v.Tag.Lookup("validrange")
+	if found {
+		annotations.ValidRange = validRange
+	}
 	errMsg, found := v.Tag.Lookup("errormsg")
 	if found {
 		annotations.ErrorMsg = errMsg
@@ -69,7 +73,7 @@ func (f *structField) handle(a *annotations) error {
 		a = f.getAnnotations(f.field.Type().Field(0))
 	}
 
-	// Check which fields are set in the struct
+	// Check which fields are set in the struct and store them for validation of "requires" tags
 	setFields := []string{}
 	for i := 0; i < f.field.NumField(); i++ {
 		v := f.field.Field(i)
@@ -79,18 +83,20 @@ func (f *structField) handle(a *annotations) error {
 		}
 	}
 
-	// Handle struct recursively
+	// Iterate struct fields and handle each field recursively
 	for i := 0; i < f.field.NumField(); i++ {
 
 		var subField reflect.Value
 		v := f.field.Field(i)
 
+		// Create a exported version of the field if it is unexported to allow access to its value
 		if !f.field.Type().Field(i).IsExported() {
 			subField = reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem() // Get access to unexported field
 		} else {
 			subField = v
 		}
 
+		// Get the type handler for the current field
 		fieldType, err := getType(subField)
 		if err != nil {
 			return fmt.Errorf("failed to get field type: %v", err)
@@ -100,16 +106,17 @@ func (f *structField) handle(a *annotations) error {
 		annotations := f.getAnnotations(f.field.Type().Field(i))
 
 		// Check if the field has a "requires" tag and validate that it is set if the current field is set
+		// This needs to be handled on the struct level because the "requires" tag can reference other fields in the same struct
 		if annotations.RequiresField != "" && !subField.IsZero() {
 
 			requiredFields := strings.Split(annotations.RequiresField, ",")
 			for _, requiredField := range requiredFields {
 				requiredField = strings.TrimSpace(requiredField)
-				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(requiredField) // Check if name of required field is valid
+				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(requiredField) // Check if name of required field is valid (no special characters, starts with a letter)
 				if !match {
 					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", requiredField, f.field.Type().Field(i).Name)
 				}
-				if !existsIn(setFields, requiredField) {
+				if !existsIn(setFields, requiredField) { // Check if the required field is set
 					// Use custom error message if provided in the annotations
 					if annotations.ErrorMsg != "" {
 						return fmt.Errorf("%s", annotations.ErrorMsg)

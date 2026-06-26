@@ -36,7 +36,7 @@ func (f *stringField) handle(a *annotations) error {
 		}
 	}
 
-	// Manage required
+	// Manage required field
 	if a.Required {
 		if f.field.IsZero() {
 			// Return an error if the field is required but has no value

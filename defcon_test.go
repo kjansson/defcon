@@ -1471,3 +1471,47 @@ func TestCustomErrorMessageMustMatch(t *testing.T) {
 		t.Errorf("Custom error message not returned correctly. Got: %s", err.Error())
 	}
 }
+
+func TestIntValidRange(t *testing.T) {
+
+	type invalid struct {
+		Val int `validrange:"2-4,99"`
+	}
+
+	iv := invalid{
+		Val: 1,
+	}
+
+	err := CheckStruct(&iv)
+	if err == nil {
+		t.Errorf("Value %d should be out of the specified valid range", iv.Val)
+	}
+
+	iv.Val = 3
+	err = CheckStruct(&iv)
+	if err != nil {
+		t.Errorf("Value %d should be in the specified valid range", iv.Val)
+	}
+
+	iv.Val = 99
+	err = CheckStruct(&iv)
+	if err != nil {
+		t.Errorf("Value %d should be in the specified valid range", iv.Val)
+	}
+}
+
+func TestInvalidTypeValidRange(t *testing.T) {
+
+	type invalid struct {
+		Val float32 `validrange:"2-4,99"`
+	}
+
+	iv := invalid{
+		Val: 2,
+	}
+
+	err := CheckStruct(&iv)
+	if err == nil {
+		t.Errorf("Value %f should not be used with valid range", iv.Val)
+	}
+}

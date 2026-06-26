@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"slices"
+
+	intervals "github.com/kjansson/go-intervals"
 )
 
 type numericField struct {
@@ -15,6 +18,8 @@ func (f *numericField) new(v *reflect.Value) {
 }
 
 func (f *numericField) handle(a *annotations) error {
+
+	// Manage mustmatch
 
 	// Manage environment variables
 	if a.EnvVarName != "" && f.field.IsZero() {
@@ -35,12 +40,32 @@ func (f *numericField) handle(a *annotations) error {
 		}
 	}
 
-	// Manage required
+	// Manage required field
 	if a.Required {
 		if f.field.IsZero() {
 			// Return an error if the field is required but has no value
 			return fmt.Errorf("field is marked as required but has no value")
 		}
+	}
+
+	// Manage valid range
+	if a.ValidRange != "" && !f.field.IsZero() {
+
+		if !f.field.CanInt() {
+			return fmt.Errorf("intervals are only supported on integer fields")
+		}
+
+		interval, err := intervals.New(a.ValidRange)
+		if err != nil {
+			return fmt.Errorf("failed to create interval: %v", err)
+		}
+
+		values := interval.Values()
+
+		if !slices.Contains(values, f.field.Int()) {
+			return fmt.Errorf("integer value is out of the specified range")
+		}
+
 	}
 	return nil
 }
