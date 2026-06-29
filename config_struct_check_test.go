@@ -1,6 +1,7 @@
 package defcon
 
 import (
+	"os"
 	"testing"
 )
 
@@ -117,6 +118,171 @@ func TestString(t *testing.T) {
 	CheckConfigStruct(&test)
 	if test.Val != "test" {
 		t.Errorf("Default value did not set correctly. Wanted 'test', got '%s'", test.Val)
+	}
+}
+
+// Test default values for bool with lowercase "true"
+func TestBoolTrue(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `default:"true"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Boolean default value failed: %s", err)
+	}
+	if test.Val != true {
+		t.Errorf("Default value did not set correctly. Wanted true, got %t", test.Val)
+	}
+}
+
+// Test default values for bool with lowercase "false"
+func TestBoolFalse(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `default:"false"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Boolean default value failed: %s", err)
+	}
+	if test.Val != false {
+		t.Errorf("Default value did not set correctly. Wanted false, got %t", test.Val)
+	}
+}
+
+// Test default values for bool with uppercase "TRUE"
+func TestBoolTRUE(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `default:"TRUE"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Boolean default value failed: %s", err)
+	}
+	if test.Val != true {
+		t.Errorf("Default value did not set correctly. Wanted true, got %t", test.Val)
+	}
+}
+
+// Test default values for bool with uppercase "FALSE"
+func TestBoolFALSE(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `default:"FALSE"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Boolean default value failed: %s", err)
+	}
+	if test.Val != false {
+		t.Errorf("Default value did not set correctly. Wanted false, got %t", test.Val)
+	}
+}
+
+// Test default values for bool with mixed case "True"
+func TestBoolMixedCaseTrue(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `default:"True"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Boolean default value failed: %s", err)
+	}
+	if test.Val != true {
+		t.Errorf("Default value did not set correctly. Wanted true, got %t", test.Val)
+	}
+}
+
+// Test default values for bool with mixed case "False"
+func TestBoolMixedCaseFalse(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `default:"False"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Boolean default value failed: %s", err)
+	}
+	if test.Val != false {
+		t.Errorf("Default value did not set correctly. Wanted false, got %t", test.Val)
+	}
+}
+
+// Test required bool
+func TestRequiredBool(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `required:"true"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Required boolean field was not required")
+	}
+}
+
+// Test invalid boolean value
+func TestInvalidBoolean(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `default:"notabool"`
+	}
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if err == nil {
+		t.Errorf("Invalid boolean tag value was not detected")
+	}
+}
+
+// Test bool with env var
+func TestEnvVarBool(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `env:"ENV_VAR_BOOL_TEST"`
+	}
+
+	err := os.Setenv("ENV_VAR_BOOL_TEST", "true")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Env var bool not handled correctly: %s", err)
+	}
+	if test.Val != true {
+		t.Errorf("Env var bool not handled correctly. Wanted true, got %t", test.Val)
+	}
+
+	err = os.Unsetenv("ENV_VAR_BOOL_TEST")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
+
+// Test bool doesn't get overridden when already set to true
+func TestBoolAlreadySetTrue(t *testing.T) {
+
+	type testStruct struct {
+		Val bool `default:"false"`
+	}
+	test := testStruct{Val: true}
+	err := CheckConfigStruct(&test)
+	if err != nil {
+		t.Errorf("Boolean handling failed: %s", err)
+	}
+	if test.Val != true {
+		t.Errorf("Boolean value was incorrectly overridden. Wanted true, got %t", test.Val)
 	}
 }
 
@@ -440,5 +606,115 @@ func TestWrongTypeArray(t *testing.T) {
 	err := CheckConfigStruct(&test)
 	if err == nil {
 		t.Errorf("Wrong type array not handled correctly. %s", err)
+	}
+}
+
+func TestEnvVarWithoutDefault(t *testing.T) {
+
+	type testStruct struct {
+		Val1 string `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "test")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckConfigStruct(&test)
+	if test.Val1 != "test" {
+		t.Errorf("Env var without default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
+
+func TestEnvVarWithDefault(t *testing.T) {
+
+	type testStruct struct {
+		Val1 string `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH" default:"test"`
+	}
+
+	test := testStruct{}
+	err := CheckConfigStruct(&test)
+	if test.Val1 != "test" {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+}
+
+func TestEnvVarInteger(t *testing.T) {
+
+	type testStruct struct {
+		Val1 int `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "123")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckConfigStruct(&test)
+	if test.Val1 != 123 {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
+
+func TestEnvVarFloat(t *testing.T) {
+
+	type testStruct struct {
+		Val1 float64 `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "123.123")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckConfigStruct(&test)
+	if test.Val1 != 123.123 {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
+	}
+}
+
+func TestEnvVarSlice(t *testing.T) {
+
+	type testStruct struct {
+		arr []string `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
+	}
+
+	err := os.Setenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH", "{test1, test2}")
+	if err != nil {
+		t.Errorf("Could not set environment variable for test.")
+	}
+
+	test := testStruct{}
+	err = CheckConfigStruct(&test)
+
+	if test.arr[0] != "test1" {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	if test.arr[1] != "test2" {
+		t.Errorf("Env var with default not handled correctly. %s", err)
+	}
+
+	err = os.Unsetenv("ENV_VAR_ALDKAKDICJAHDNBEBDASH")
+	if err != nil {
+		t.Errorf("Could not unset environment variable for test.")
 	}
 }
