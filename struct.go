@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go/token"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"unsafe"
 )
@@ -17,44 +19,87 @@ func (f *structField) new(v *reflect.Value) {
 }
 
 // getAnnotations retrieves the annotations for a struct field
-func (f *structField) getAnnotations(v reflect.StructField) *annotations {
+func (f *structField) getAnnotations(v reflect.StructField) (*annotations, error) {
 	var annotations annotations
+	var err error
 
 	required, found := v.Tag.Lookup("required")
-	if found && isTrue(required) {
-		annotations.Required = true
+	// Get and validate boolean value for required
+	if found {
+		reqBool, err := strconv.ParseBool(required)
+		if err != nil {
+			return nil, fmt.Errorf("non-boolean value found where expected: %s", err)
+		}
+		annotations.Required = reqBool
 	}
+
+	// Default, defaultfrom are pure string values, no checks required
 	annotations.DefaultValue, _ = v.Tag.Lookup("default")
 	annotations.DefaultFromField, _ = v.Tag.Lookup("defaultfrom")
-	annotations.RequiresField, _ = v.Tag.Lookup("requires")
+
+	// Get requires fields, clean up whitespace and split by comma
+	requires, found := v.Tag.Lookup("requires")
+	if found {
+		annotations.RequiresField = strings.Split(strings.TrimSpace(requires), ",")
+	}
+
+	// Get and clean up environment variable names
 	envVar, found := v.Tag.Lookup("env")
 	if found {
 		annotations.EnvVarName = strings.TrimSpace(envVar)
 	}
+
+	// Get and clean up musthave values
 	mustHave, found := v.Tag.Lookup("musthave")
 	if found {
-		annotations.MustHave = strings.Split(mustHave, ",")
+		annotations.MustHave = strings.Split(strings.TrimSpace(mustHave), ",")
 	}
+
+	// Get and validate boolean value for unique
 	unique, found := v.Tag.Lookup("unique")
-	if found && !isTrue(unique) {
-		annotations.Unique = false
+	if found {
+		uniqueBool, err := strconv.ParseBool(unique)
+		if err != nil {
+			return nil, fmt.Errorf("non-boolean value found where expected: %s", err)
+		}
+		annotations.Unique = uniqueBool
 	}
+
+	// Get and cleanup values for alwayshas
 	alwaysHas, found := v.Tag.Lookup("alwayshas")
 	if found {
-		annotations.AlwaysHas = strings.Split(alwaysHas, ",")
+		annotations.AlwaysHas = strings.Split(strings.TrimSpace(alwaysHas), ",")
 	}
+
+	// Get and compile regex for mustmatch
 	mustMatch, found := v.Tag.Lookup("mustmatch")
 	if found {
-		annotations.MustMatch = mustMatch
+		annotations.MustMatch, err = regexp.Compile(mustMatch)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse regular expression: %s", err)
+		}
 	}
+
+	// Get and compile regex for mustnotmatch
 	mustNotMatch, found := v.Tag.Lookup("mustnotmatch")
 	if found {
-		annotations.MustNotMatch = mustNotMatch
+		annotations.MustNotMatch, err = regexp.Compile(mustNotMatch)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse regular expression: %s", err)
+		}
 	}
+
+	// Get and validate boolean value for unique
 	unique, found = v.Tag.Lookup("unique")
-	if found && isTrue(unique) {
-		annotations.Unique = true
+	if found {
+		uniqueBool, err := strconv.ParseBool(unique)
+		if err != nil {
+			return nil, fmt.Errorf("non-boolean value found where expected: %s", err)
+		}
+		annotations.Unique = uniqueBool
 	}
+
+	// Get validrange values, these are validated in the numericField handler
 	validRange, found := v.Tag.Lookup("validrange")
 	if found {
 		annotations.ValidRange = validRange
@@ -64,7 +109,7 @@ func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 		annotations.ErrorMsg = errMsg
 	}
 
-	return &annotations
+	return &annotations, nil
 }
 
 func (f *structField) handle(a *annotations) error {
@@ -99,15 +144,16 @@ func (f *structField) handle(a *annotations) error {
 		}
 
 		// Get annotations for the current field
-		annotations := f.getAnnotations(f.field.Type().Field(i))
+		annotations, err := f.getAnnotations(f.field.Type().Field(i))
+		if err != nil {
+			return fmt.Errorf("invalid annotation syntax: %s", err)
+		}
 
 		// Check if the field has a "requires" tag and validate that it is set if the current field is set
 		// This needs to be handled on the struct level because the "requires" tag can reference other fields in the same struct
-		if annotations.RequiresField != "" && !subField.IsZero() {
+		if len(annotations.RequiresField) > 0 && !subField.IsZero() {
 
-			requiredFields := strings.Split(annotations.RequiresField, ",")
-			for _, requiredField := range requiredFields {
-				requiredField = strings.TrimSpace(requiredField)
+			for _, requiredField := range annotations.RequiresField {
 
 				if !token.IsIdentifier(requiredField) {
 					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", requiredField, f.field.Type().Field(i).Name)

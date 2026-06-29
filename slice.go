@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"regexp"
 	"slices"
 
 	intervals "github.com/kjansson/go-intervals"
@@ -128,26 +127,18 @@ func (f *sliceField) handle(a *annotations) error {
 	}
 
 	// Handle mustmatch
-	if a.MustMatch != "" && f.field.Len() > 0 {
-		regex, err := regexp.Compile(a.MustMatch)
-		if err != nil {
-			return fmt.Errorf("failed to compile regex: %v", err)
-		}
+	if a.MustMatch != nil && f.field.Len() > 0 {
 		for i := 0; i < f.field.Len(); i++ {
-			if !regex.MatchString(f.field.Index(i).String()) {
+			if !a.MustMatch.MatchString(f.field.Index(i).String()) {
 				return fmt.Errorf("field value '%s' does not match regex '%s'", f.field.Index(i).String(), a.MustMatch)
 			}
 		}
 	}
 
 	// Handle mustnotmatch
-	if a.MustNotMatch != "" && f.field.Len() > 0 {
-		regex, err := regexp.Compile(a.MustNotMatch)
-		if err != nil {
-			return fmt.Errorf("failed to compile regex: %v", err)
-		}
+	if a.MustNotMatch != nil && f.field.Len() > 0 {
 		for i := 0; i < f.field.Len(); i++ {
-			if regex.MatchString(f.field.Index(i).String()) {
+			if a.MustNotMatch.MatchString(f.field.Index(i).String()) {
 				return fmt.Errorf("field value '%s' matches forbidden regex '%s'", f.field.Index(i).String(), a.MustNotMatch)
 			}
 		}

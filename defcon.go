@@ -36,10 +36,6 @@ func CheckStruct(config interface{}) error {
 
 }
 
-func isTrue(value string) bool {
-	return value == "true" || value == "TRUE"
-}
-
 // Get reflection type and returns its type family and number of bits
 func getTypeDetails(v reflect.Value) (string, int) {
 
