@@ -2,8 +2,8 @@ package defcon
 
 import (
 	"fmt"
+	"go/token"
 	"reflect"
-	"regexp"
 	"strings"
 	"unsafe"
 )
@@ -108,8 +108,8 @@ func (f *structField) handle(a *annotations) error {
 			requiredFields := strings.Split(annotations.RequiresField, ",")
 			for _, requiredField := range requiredFields {
 				requiredField = strings.TrimSpace(requiredField)
-				match := regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_-]+$").MatchString(requiredField) // Check if name of required field is valid (no special characters, starts with a letter)
-				if !match {
+
+				if !token.IsIdentifier(requiredField) {
 					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", requiredField, f.field.Type().Field(i).Name)
 				}
 				if !existsIn(setFields, requiredField) { // Check if the required field is set
