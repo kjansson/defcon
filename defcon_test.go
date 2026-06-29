@@ -615,7 +615,7 @@ func TestWrongTypeSlice(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 
-	if test.arr1[0] == false {
+	if test.arr1 != nil {
 		t.Errorf("Wrong type Slice not handled correctly. %s", err)
 	}
 
