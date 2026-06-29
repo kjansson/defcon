@@ -24,9 +24,9 @@ func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 	if found && isTrue(required) {
 		annotations.Required = true
 	}
-	annotations.DefaultValue, found = v.Tag.Lookup("default")
-	annotations.DefaultFromField, found = v.Tag.Lookup("defaultfrom")
-	annotations.RequiresField, found = v.Tag.Lookup("requires")
+	annotations.DefaultValue, _ = v.Tag.Lookup("default")
+	annotations.DefaultFromField, _ = v.Tag.Lookup("defaultfrom")
+	annotations.RequiresField, _ = v.Tag.Lookup("requires")
 	envVar, found := v.Tag.Lookup("env")
 	if found {
 		annotations.EnvVarName = strings.TrimSpace(envVar)
@@ -68,10 +68,6 @@ func (f *structField) getAnnotations(v reflect.StructField) *annotations {
 }
 
 func (f *structField) handle(a *annotations) error {
-
-	if a == nil {
-		a = f.getAnnotations(f.field.Type().Field(0))
-	}
 
 	// Check which fields are set in the struct and store them for validation of "requires" tags
 	setFields := []string{}

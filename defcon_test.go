@@ -48,7 +48,10 @@ func TestInt16(t *testing.T) {
 
 	test := testStruct{}
 
-	CheckStruct(&test)
+	err := CheckStruct(&test)
+	if err != nil {
+		t.Errorf("Error checking struct: %s", err)
+	}
 
 	if test.Val != 127 {
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
@@ -63,7 +66,10 @@ func TestInt32(t *testing.T) {
 		Val int32 `default:"127"`
 	}
 	test := testStruct{}
-	CheckStruct(&test)
+	err := CheckStruct(&test)
+	if err != nil {
+		t.Errorf("Error checking struct: %s", err)
+	}
 	if test.Val != 127 {
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
 	}
@@ -608,6 +614,11 @@ func TestWrongTypeSlice(t *testing.T) {
 
 	test := testStruct{}
 	err := CheckStruct(&test)
+
+	if test.arr1[0] == false {
+		t.Errorf("Wrong type Slice not handled correctly. %s", err)
+	}
+
 	if err == nil {
 		t.Errorf("Wrong type Slice not handled correctly. %s", err)
 	}

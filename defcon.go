@@ -101,7 +101,8 @@ func setValue(v *reflect.Value, val string) error {
 	case "slice":
 		eType, bits := getElementTypeDetails(*v)
 		var uv = reflect.Value{}
-		if eType == "int" {
+		switch eType {
+		case "int":
 			values := strings.Split(regexp.MustCompile("^{(.*)}").FindStringSubmatch(val)[1], ",")
 			switch bits {
 			case 8:
@@ -149,7 +150,7 @@ func setValue(v *reflect.Value, val string) error {
 				}
 			}
 			v.Set(uv.Elem()) // Set the value of the reflect value to the slice
-		} else if eType == "float" {
+		case "float":
 			values := strings.Split(regexp.MustCompile("^{(.*)}").FindStringSubmatch(val)[1], ",")
 			switch bits {
 			case 32:
@@ -183,7 +184,7 @@ func setValue(v *reflect.Value, val string) error {
 				}
 			}
 			v.Set(uv.Elem()) // Set the value of the reflect value to the slice
-		} else if eType == "string" {
+		case "string":
 			values := strings.Split(regexp.MustCompile("^{(.*)}").FindStringSubmatch(val)[1], ",")
 			us := make([]string, 0)    // Create a slice of strings
 			u := &us                   // Create a pointer to the slice
@@ -193,7 +194,7 @@ func setValue(v *reflect.Value, val string) error {
 				uv.Elem().Set(reflect.Append(uv.Elem(), y)) // Append the value to the slice
 			}
 			v.Set(uv.Elem()) // Set the value of the reflect value to the slice
-		} else {
+		default:
 			return fmt.Errorf("slice type %s is not supported", eType)
 		}
 	}
