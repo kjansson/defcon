@@ -5,6 +5,9 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"slices"
+
+	intervals "github.com/kjansson/go-intervals"
 )
 
 type sliceField struct {
@@ -160,6 +163,28 @@ func (f *sliceField) handle(a *annotations) error {
 			}
 			seen[val] = true
 		}
+	}
+
+	// Manage valid range
+	if a.ValidRange != "" && !f.field.IsZero() {
+
+		interval, err := intervals.New(a.ValidRange)
+		if err != nil {
+			return fmt.Errorf("failed to create interval: %v", err)
+		}
+
+		values := interval.Values()
+
+		for i := 0; i < f.field.Len(); i++ {
+			if !f.field.Index(i).CanInt() {
+				return fmt.Errorf("intervals are only supported on integer fields")
+			}
+
+			if !slices.Contains(values, f.field.Index(i).Int()) {
+				return fmt.Errorf("integer value is out of the specified range")
+			}
+		}
+
 	}
 
 	return nil

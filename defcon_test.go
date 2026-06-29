@@ -452,7 +452,7 @@ func TestUnexported(t *testing.T) {
 	}
 }
 
-func TestStringArray(t *testing.T) {
+func TestStringSlice(t *testing.T) {
 
 	type testStruct struct {
 		arr1 []string `default:"{foo, bar}"`
@@ -461,17 +461,17 @@ func TestStringArray(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 	if err != nil {
-		t.Errorf("Default array value not handled correctly. %s", err)
+		t.Errorf("Default Slice value not handled correctly. %s", err)
 	}
 	if test.arr1[0] != "foo" {
-		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%s'", test.arr1[0])
+		t.Errorf("Default Slice value not handled correctly. Should be 'foo', is '%s'", test.arr1[0])
 	}
 	if test.arr1[1] != "bar" {
-		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%s'", test.arr1[1])
+		t.Errorf("Default Slice value not handled correctly. Should be 'bar', is '%s'", test.arr1[1])
 	}
 }
 
-func TestIntArray(t *testing.T) {
+func TestIntSlice(t *testing.T) {
 
 	type testStruct struct {
 		arr1 []int `default:"{1, 2}"`
@@ -480,16 +480,16 @@ func TestIntArray(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 	if err != nil {
-		t.Errorf("Default array value not handled correctly. %s", err)
+		t.Errorf("Default Slice value not handled correctly. %s", err)
 	}
 	if test.arr1[0] != 1 {
-		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+		t.Errorf("Default Slice value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
 	}
 	if test.arr1[1] != 2 {
-		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+		t.Errorf("Default Slice value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
 	}
 }
-func TestInt8Array(t *testing.T) {
+func TestInt8Slice(t *testing.T) {
 
 	type testStruct struct {
 		arr1 []int8 `default:"{1, 2}"`
@@ -498,17 +498,17 @@ func TestInt8Array(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 	if err != nil {
-		t.Errorf("Default array value not handled correctly. %s", err)
+		t.Errorf("Default Slice value not handled correctly. %s", err)
 	}
 	if test.arr1[0] != 1 {
-		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+		t.Errorf("Default Slice value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
 	}
 	if test.arr1[1] != 2 {
-		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+		t.Errorf("Default Slice value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
 	}
 }
 
-func TestInt16Array(t *testing.T) {
+func TestInt16Slice(t *testing.T) {
 	type testStruct struct {
 		arr1 []int16 `default:"{1, 2}"`
 	}
@@ -516,17 +516,17 @@ func TestInt16Array(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 	if err != nil {
-		t.Errorf("Default array value not handled correctly. %s", err)
+		t.Errorf("Default Slice value not handled correctly. %s", err)
 	}
 	if test.arr1[0] != 1 {
-		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+		t.Errorf("Default Slice value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
 	}
 	if test.arr1[1] != 2 {
-		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+		t.Errorf("Default Slice value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
 	}
 }
 
-func TestInt32Array(t *testing.T) {
+func TestInt32Slice(t *testing.T) {
 	type testStruct struct {
 		arr1 []int32 `default:"{1, 2}"`
 	}
@@ -534,17 +534,17 @@ func TestInt32Array(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 	if err != nil {
-		t.Errorf("Default array value not handled correctly. %s", err)
+		t.Errorf("Default Slice value not handled correctly. %s", err)
 	}
 	if test.arr1[0] != 1 {
-		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+		t.Errorf("Default Slice value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
 	}
 	if test.arr1[1] != 2 {
-		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+		t.Errorf("Default Slice value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
 	}
 }
 
-func TestInt64Array(t *testing.T) {
+func TestInt64Slice(t *testing.T) {
 	type testStruct struct {
 		arr1 []int64 `default:"{1, 2}"`
 	}
@@ -552,17 +552,17 @@ func TestInt64Array(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 	if err != nil {
-		t.Errorf("Default array value not handled correctly. %s", err)
+		t.Errorf("Default Slice value not handled correctly. %s", err)
 	}
 	if test.arr1[0] != 1 {
-		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
+		t.Errorf("Default Slice value not handled correctly. Should be 'foo', is '%d'", test.arr1[0])
 	}
 	if test.arr1[1] != 2 {
-		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
+		t.Errorf("Default Slice value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
 	}
 }
 
-func TestFloat32Array(t *testing.T) {
+func TestFloat32Slice(t *testing.T) {
 
 	type testStruct struct {
 		arr1 []float32 `default:"{1.2, 2.3}"`
@@ -571,17 +571,17 @@ func TestFloat32Array(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 	if err != nil {
-		t.Errorf("Default array value not handled correctly. %s", err)
+		t.Errorf("Default Slice value not handled correctly. %s", err)
 	}
 	if test.arr1[0] != 1.2 {
-		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%f'", test.arr1[0])
+		t.Errorf("Default Slice value not handled correctly. Should be 'foo', is '%f'", test.arr1[0])
 	}
 	if test.arr1[1] != 2.3 {
-		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%f'", test.arr1[1])
+		t.Errorf("Default Slice value not handled correctly. Should be 'bar', is '%f'", test.arr1[1])
 	}
 }
 
-func TestFloat64Array(t *testing.T) {
+func TestFloat64Slice(t *testing.T) {
 
 	type testStruct struct {
 		arr1 []float64 `default:"{1.2, 2.3}"`
@@ -590,17 +590,17 @@ func TestFloat64Array(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 	if err != nil {
-		t.Errorf("Default array value not handled correctly. %s", err)
+		t.Errorf("Default Slice value not handled correctly. %s", err)
 	}
 	if test.arr1[0] != 1.2 {
-		t.Errorf("Default array value not handled correctly. Should be 'foo', is '%f'", test.arr1[0])
+		t.Errorf("Default Slice value not handled correctly. Should be 'foo', is '%f'", test.arr1[0])
 	}
 	if test.arr1[1] != 2.3 {
-		t.Errorf("Default array value not handled correctly. Should be 'bar', is '%f'", test.arr1[1])
+		t.Errorf("Default Slice value not handled correctly. Should be 'bar', is '%f'", test.arr1[1])
 	}
 }
 
-func TestWrongTypeArray(t *testing.T) {
+func TestWrongTypeSlice(t *testing.T) {
 
 	type testStruct struct {
 		arr1 []bool `default:"{foo, bar}"`
@@ -609,7 +609,7 @@ func TestWrongTypeArray(t *testing.T) {
 	test := testStruct{}
 	err := CheckStruct(&test)
 	if err == nil {
-		t.Errorf("Wrong type array not handled correctly. %s", err)
+		t.Errorf("Wrong type Slice not handled correctly. %s", err)
 	}
 }
 
@@ -1453,6 +1453,25 @@ func TestCustomErrorMessageRequired(t *testing.T) {
 	}
 }
 
+func TestCustomErrorMessageMustMatchSlice(t *testing.T) {
+
+	type invalid struct {
+		Val []string `mustmatch:"^foo.*$" errormsg:"Val must match the pattern ^foo.*$"`
+	}
+
+	iv := invalid{
+		Val: []string{"bar"},
+	}
+
+	err := CheckStruct(&iv)
+	if err == nil {
+		t.Errorf("Custom error message should be returned for invalid struct")
+	}
+	if err.Error() != "Val must match the pattern ^foo.*$" {
+		t.Errorf("Custom error message not returned correctly. Got: %s", err.Error())
+	}
+}
+
 func TestCustomErrorMessageMustMatch(t *testing.T) {
 
 	type invalid struct {
@@ -1512,6 +1531,44 @@ func TestInvalidTypeValidRange(t *testing.T) {
 
 	err := CheckStruct(&iv)
 	if err == nil {
-		t.Errorf("Value %f should not be used with valid range", iv.Val)
+		t.Errorf("Type float should not be used with valid range")
+	}
+}
+
+func TestIntSliceValidRange(t *testing.T) {
+
+	type invalid struct {
+		Val []int `validrange:"2-4,99"`
+	}
+
+	iv := invalid{
+		Val: []int{1, 2},
+	}
+
+	err := CheckStruct(&iv)
+	if err == nil {
+		t.Errorf("Values should be out of the specified valid range")
+	}
+
+	iv.Val = []int{2, 3, 99}
+	err = CheckStruct(&iv)
+	if err != nil {
+		t.Errorf("Value %d should be in the specified valid range", iv.Val)
+	}
+}
+
+func TestInvalidTypeSliceValidRange(t *testing.T) {
+
+	type invalid struct {
+		Val []float32 `validrange:"2-4,99"`
+	}
+
+	iv := invalid{
+		Val: []float32{2},
+	}
+
+	err := CheckStruct(&iv)
+	if err == nil {
+		t.Errorf("Type float should not be used with valid range")
 	}
 }
