@@ -98,7 +98,10 @@ func TestFloat32(t *testing.T) {
 		Val float32 `default:"127.127"`
 	}
 	test := testStruct{}
-	CheckStruct(&test)
+	err := CheckStruct(&test)
+	if err != nil {
+		t.Errorf("Error checking struct: %s", err)
+	}
 	if test.Val != 127.127 {
 		t.Errorf("Default value did not set correctly. Wanted 127.127, got %f", test.Val)
 	}
@@ -461,6 +464,7 @@ func TestUnexported(t *testing.T) {
 	}
 }
 
+// Test default values for string slice
 func TestStringSlice(t *testing.T) {
 
 	type testStruct struct {
@@ -480,6 +484,7 @@ func TestStringSlice(t *testing.T) {
 	}
 }
 
+// Test default values for int slice
 func TestIntSlice(t *testing.T) {
 
 	type testStruct struct {
@@ -498,6 +503,8 @@ func TestIntSlice(t *testing.T) {
 		t.Errorf("Default Slice value not handled correctly. Should be 'bar', is '%d'", test.arr1[1])
 	}
 }
+
+// Test default values for int8 slice
 func TestInt8Slice(t *testing.T) {
 
 	type testStruct struct {
@@ -517,6 +524,7 @@ func TestInt8Slice(t *testing.T) {
 	}
 }
 
+// Test default values for int16 slice
 func TestInt16Slice(t *testing.T) {
 	type testStruct struct {
 		arr1 []int16 `default:"{1, 2}"`
@@ -535,6 +543,7 @@ func TestInt16Slice(t *testing.T) {
 	}
 }
 
+// Test default values for int32 slice
 func TestInt32Slice(t *testing.T) {
 	type testStruct struct {
 		arr1 []int32 `default:"{1, 2}"`
@@ -553,6 +562,7 @@ func TestInt32Slice(t *testing.T) {
 	}
 }
 
+// Test default values for int64 slice
 func TestInt64Slice(t *testing.T) {
 	type testStruct struct {
 		arr1 []int64 `default:"{1, 2}"`
@@ -571,6 +581,7 @@ func TestInt64Slice(t *testing.T) {
 	}
 }
 
+// Test default values for float32 slice
 func TestFloat32Slice(t *testing.T) {
 
 	type testStruct struct {
@@ -590,6 +601,7 @@ func TestFloat32Slice(t *testing.T) {
 	}
 }
 
+// Test default values for float64 slice
 func TestFloat64Slice(t *testing.T) {
 
 	type testStruct struct {
@@ -609,6 +621,7 @@ func TestFloat64Slice(t *testing.T) {
 	}
 }
 
+// Test wrong type slice, should return error
 func TestWrongTypeSlice(t *testing.T) {
 
 	type testStruct struct {
@@ -627,6 +640,7 @@ func TestWrongTypeSlice(t *testing.T) {
 	}
 }
 
+// Test environment variable without default value
 func TestEnvVarWithoutDefault(t *testing.T) {
 
 	type testStruct struct {
@@ -650,6 +664,7 @@ func TestEnvVarWithoutDefault(t *testing.T) {
 	}
 }
 
+// Test environment variable with default value
 func TestEnvVarWithDefault(t *testing.T) {
 
 	type testStruct struct {
@@ -663,6 +678,7 @@ func TestEnvVarWithDefault(t *testing.T) {
 	}
 }
 
+// Test environment variable with integer value
 func TestEnvVarInteger(t *testing.T) {
 
 	type testStruct struct {
@@ -686,6 +702,7 @@ func TestEnvVarInteger(t *testing.T) {
 	}
 }
 
+// Test environment variable with float value
 func TestEnvVarFloat(t *testing.T) {
 
 	type testStruct struct {
@@ -709,7 +726,8 @@ func TestEnvVarFloat(t *testing.T) {
 	}
 }
 
-func TestEnvVarStingSlice(t *testing.T) {
+// Test environment variable with string slice value
+func TestEnvVarStringSlice(t *testing.T) {
 
 	type testStruct struct {
 		arr []string `env:"ENV_VAR_ALDKAKDICJAHDNBEBDASH"`
@@ -737,6 +755,7 @@ func TestEnvVarStingSlice(t *testing.T) {
 	}
 }
 
+// Test environment variable with int slice value
 func TestEnvVarIntSlice(t *testing.T) {
 
 	type testStruct struct {
@@ -765,6 +784,7 @@ func TestEnvVarIntSlice(t *testing.T) {
 	}
 }
 
+// Test environment variable with float slice value
 func TestEnvVarFloatSlice(t *testing.T) {
 
 	type testStruct struct {
@@ -1028,6 +1048,7 @@ func TestEmptySliceOfStructs(t *testing.T) {
 	}
 }
 
+// Test slice with musthave
 func TestSliceMustHaveRequiredFieldString(t *testing.T) {
 
 	type testStruct struct {
@@ -1044,6 +1065,7 @@ func TestSliceMustHaveRequiredFieldString(t *testing.T) {
 	}
 }
 
+// Test slice with musthave for int
 func TestSliceMustHaveRequiredFieldInt(t *testing.T) {
 
 	type testStruct struct {
@@ -1060,6 +1082,7 @@ func TestSliceMustHaveRequiredFieldInt(t *testing.T) {
 	}
 }
 
+// Test slice with musthave for int8
 func TestSliceMustHaveRequiredFieldInt8(t *testing.T) {
 
 	type testStruct struct {
@@ -1076,6 +1099,7 @@ func TestSliceMustHaveRequiredFieldInt8(t *testing.T) {
 	}
 }
 
+// Test slice with musthave for int16
 func TestSliceMustHaveRequiredFieldFloat64(t *testing.T) {
 
 	type testStruct struct {
@@ -1092,6 +1116,7 @@ func TestSliceMustHaveRequiredFieldFloat64(t *testing.T) {
 	}
 }
 
+// Test slice with musthave for int32
 func TestSliceMustHaveRequiredFieldFloat32(t *testing.T) {
 
 	type testStruct struct {
@@ -1108,6 +1133,7 @@ func TestSliceMustHaveRequiredFieldFloat32(t *testing.T) {
 	}
 }
 
+// Test string slice with alwayshas
 func TestSliceAlwaysHasFieldString(t *testing.T) {
 
 	type testStruct struct {
@@ -1135,6 +1161,7 @@ func TestSliceAlwaysHasFieldString(t *testing.T) {
 	}
 }
 
+// Test int slice with alwayshas
 func TestSliceAlwaysHasFieldInt(t *testing.T) {
 
 	type testStruct struct {
@@ -1162,6 +1189,7 @@ func TestSliceAlwaysHasFieldInt(t *testing.T) {
 	}
 }
 
+// Test int8 slice with alwayshas
 func TestSliceAlwaysHasFieldInt8(t *testing.T) {
 
 	type testStruct struct {
@@ -1189,6 +1217,7 @@ func TestSliceAlwaysHasFieldInt8(t *testing.T) {
 	}
 }
 
+// Test int16 slice with alwayshas
 func TestSliceAlwaysHasFieldInt16(t *testing.T) {
 
 	type testStruct struct {
@@ -1216,6 +1245,7 @@ func TestSliceAlwaysHasFieldInt16(t *testing.T) {
 	}
 }
 
+// Test int32 slice with alwayshas
 func TestSliceAlwaysHasFieldInt32(t *testing.T) {
 
 	type testStruct struct {
@@ -1243,6 +1273,7 @@ func TestSliceAlwaysHasFieldInt32(t *testing.T) {
 	}
 }
 
+// Test int64 slice with alwayshas
 func TestSliceAlwaysHasFieldInt64(t *testing.T) {
 
 	type testStruct struct {
@@ -1270,6 +1301,7 @@ func TestSliceAlwaysHasFieldInt64(t *testing.T) {
 	}
 }
 
+// Test float32 slice with alwayshas
 func TestSliceAlwaysHasFieldFloat32(t *testing.T) {
 
 	type testStruct struct {
@@ -1297,6 +1329,7 @@ func TestSliceAlwaysHasFieldFloat32(t *testing.T) {
 	}
 }
 
+// Test float64 slice with alwayshas
 func TestSliceAlwaysHasFieldFloat64(t *testing.T) {
 
 	type testStruct struct {
@@ -1324,6 +1357,7 @@ func TestSliceAlwaysHasFieldFloat64(t *testing.T) {
 	}
 }
 
+// Test string field with mustmatch
 func TestStringMustMatch(t *testing.T) {
 
 	type testStruct struct {
@@ -1340,6 +1374,7 @@ func TestStringMustMatch(t *testing.T) {
 	}
 }
 
+// Test string slice with mustmatch
 func TestSliceMustMatch(t *testing.T) {
 
 	type testStruct struct {
@@ -1356,6 +1391,7 @@ func TestSliceMustMatch(t *testing.T) {
 	}
 }
 
+// Test string field with mustnotmatch
 func TestStringMustNotMatch(t *testing.T) {
 
 	type testStruct struct {
@@ -1372,6 +1408,7 @@ func TestStringMustNotMatch(t *testing.T) {
 	}
 }
 
+// Test string slice with mustnotmatch
 func TestSliceMustNotMatch(t *testing.T) {
 
 	type testStruct struct {
@@ -1388,6 +1425,7 @@ func TestSliceMustNotMatch(t *testing.T) {
 	}
 }
 
+// Test string slice with unique values
 func TestSliceUniqueString(t *testing.T) {
 
 	type testStruct struct {
@@ -1404,6 +1442,7 @@ func TestSliceUniqueString(t *testing.T) {
 	}
 }
 
+// Test int slice with unique values
 func TestSliceUniqueInt(t *testing.T) {
 
 	type testStruct struct {
@@ -1420,6 +1459,7 @@ func TestSliceUniqueInt(t *testing.T) {
 	}
 }
 
+// Test int8 slice with unique values
 func TestSliceUniqueFloat32(t *testing.T) {
 
 	type testStruct struct {
@@ -1436,6 +1476,7 @@ func TestSliceUniqueFloat32(t *testing.T) {
 	}
 }
 
+// Test default and mustmatch together
 func TestDefaultAndMustMatch(t *testing.T) {
 
 	type invalid struct {
@@ -1450,6 +1491,7 @@ func TestDefaultAndMustMatch(t *testing.T) {
 	}
 }
 
+// Test custom error message for required field
 func TestCustomErrorMessageRequired(t *testing.T) {
 
 	type invalid struct {
@@ -1467,6 +1509,7 @@ func TestCustomErrorMessageRequired(t *testing.T) {
 	}
 }
 
+// Test custom error message for mustmatch slice
 func TestCustomErrorMessageMustMatchSlice(t *testing.T) {
 
 	type invalid struct {
@@ -1486,6 +1529,7 @@ func TestCustomErrorMessageMustMatchSlice(t *testing.T) {
 	}
 }
 
+// Test custom error message for mustmatch string
 func TestCustomErrorMessageMustMatch(t *testing.T) {
 
 	type invalid struct {
@@ -1505,6 +1549,7 @@ func TestCustomErrorMessageMustMatch(t *testing.T) {
 	}
 }
 
+// Test custom error for validrange
 func TestIntValidRange(t *testing.T) {
 
 	type invalid struct {
@@ -1533,6 +1578,7 @@ func TestIntValidRange(t *testing.T) {
 	}
 }
 
+// Test validrange with invalid type
 func TestInvalidTypeValidRange(t *testing.T) {
 
 	type invalid struct {
@@ -1549,6 +1595,7 @@ func TestInvalidTypeValidRange(t *testing.T) {
 	}
 }
 
+// Test validrange with int slice
 func TestIntSliceValidRange(t *testing.T) {
 
 	type invalid struct {
@@ -1571,6 +1618,7 @@ func TestIntSliceValidRange(t *testing.T) {
 	}
 }
 
+// Test validrange with invalid type slice
 func TestInvalidTypeSliceValidRange(t *testing.T) {
 
 	type invalid struct {
