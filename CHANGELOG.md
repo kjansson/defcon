@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/kjansson/defcon/compare/v1.4.0...v1.4.1) (2026-06-30)
+
+
+### Bug Fixes
+
+* tests and docs regarding regex escaping ([#14](https://github.com/kjansson/defcon/issues/14)) ([75d3b8d](https://github.com/kjansson/defcon/commit/75d3b8dbb1535324c113a689b0b832f9d61383cf))
+
 ## [1.4.0](https://github.com/kjansson/defcon/compare/v1.3.2...v1.4.0) (2026-06-30)
 
 
