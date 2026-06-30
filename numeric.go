@@ -13,8 +13,6 @@ type numericField struct{}
 
 func (f *numericField) handle(val *reflect.Value, annotations *annotations) error {
 
-	// Manage mustmatch
-
 	// Manage environment variables
 	if annotations.EnvVarName != "" && val.IsZero() {
 		envValue, found := os.LookupEnv(annotations.EnvVarName)

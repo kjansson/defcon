@@ -28,7 +28,6 @@ func CheckStruct(config interface{}) error {
 	s := reflect.ValueOf(config).Elem()
 
 	field := structField{}
-	//field.new(&s)
 	err := field.handle(&s, nil) // Initial call does not have annotations, it will be populated in the structField.handle method
 	if err != nil {
 		return err
