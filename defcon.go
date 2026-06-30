@@ -247,7 +247,9 @@ func createTypeFromValue(typedValue reflect.Value, untypedValueString string) (r
 
 	case "string":
 		return reflect.ValueOf(untypedValueString), nil
+
 	default:
 		return reflect.Value{}, fmt.Errorf("could not determine type")
+
 	}
 }

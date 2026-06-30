@@ -30,7 +30,6 @@ func (f *sliceField) handle(val *reflect.Value, annotations *annotations) error 
 					return fmt.Errorf("failed to get field type: %v", err)
 				}
 				// Handle the field based on its type
-				//fieldType.new(&elementPtr)
 				err = fieldType.handle(&elementPtr, nil)
 				if err != nil {
 					return fmt.Errorf("error in slice %s at index %d: %s", val.Type().Name(), j, err)
@@ -38,7 +37,6 @@ func (f *sliceField) handle(val *reflect.Value, annotations *annotations) error 
 			}
 		}
 	} else {
-
 		// Manage env var, default, required for non-struct slices
 		if annotations.EnvVarName != "" && val.IsZero() {
 			envValue, found := os.LookupEnv(annotations.EnvVarName)
@@ -62,7 +60,6 @@ func (f *sliceField) handle(val *reflect.Value, annotations *annotations) error 
 		if annotations.Required && val.Len() == 0 {
 			return fmt.Errorf("field is marked as required but has no value")
 		}
-
 	}
 
 	// Check for musthave fields
@@ -86,7 +83,6 @@ func (f *sliceField) handle(val *reflect.Value, annotations *annotations) error 
 	for _, alwaysHasField := range annotations.AlwaysHas {
 		found := false
 		for i := 0; i < val.Len(); i++ {
-			// fmt.Println("Looking for field:", alwaysHasField, "in slice:", f.field.Index(i))
 			newVal, err := createTypeFromValue(val.Index(i), alwaysHasField)
 			if err != nil {
 				return fmt.Errorf("error comparing values: %s", err)
@@ -100,7 +96,7 @@ func (f *sliceField) handle(val *reflect.Value, annotations *annotations) error 
 
 			// Figure out the type of the slice element
 			elemType := val.Type().Elem()
-			for elemType.Kind() == reflect.Ptr {
+			if elemType.Kind() == reflect.Pointer {
 				elemType = elemType.Elem()
 			}
 			newPtr := reflect.New(elemType).Elem()
@@ -134,7 +130,7 @@ func (f *sliceField) handle(val *reflect.Value, annotations *annotations) error 
 
 	// Handle unique values
 	if annotations.Unique && val.Len() > 0 {
-		seen := make(map[interface{}]bool)
+		seen := make(map[any]bool)
 		for i := 0; i < val.Len(); i++ {
 			val := val.Index(i).Interface()
 			if seen[val] {
@@ -152,18 +148,15 @@ func (f *sliceField) handle(val *reflect.Value, annotations *annotations) error 
 			return fmt.Errorf("failed to create interval: %v", err)
 		}
 
-		values := interval.Values()
-
 		for i := 0; i < val.Len(); i++ {
 			if !val.Index(i).CanInt() {
 				return fmt.Errorf("intervals are only supported on integer fields")
 			}
 
-			if !slices.Contains(values, val.Index(i).Int()) {
+			if !slices.Contains(interval.Values(), val.Index(i).Int()) {
 				return fmt.Errorf("integer value is out of the specified range")
 			}
 		}
-
 	}
 
 	return nil

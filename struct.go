@@ -15,6 +15,7 @@ type structField struct{}
 
 // getAnnotations retrieves the annotations for a struct field
 func (f *structField) getAnnotations(v reflect.StructField) (*annotations, error) {
+
 	var annotations annotations
 	var err error
 
@@ -164,7 +165,6 @@ func (f *structField) handle(val *reflect.Value, annotations *annotations) error
 		}
 
 		// Handle the field based on its type
-		//fieldType.new(&subField)
 		err = fieldType.handle(&subField, annotations)
 		if err != nil {
 			// Use custom error message if provided in the annotations
