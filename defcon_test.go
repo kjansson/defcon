@@ -1660,3 +1660,37 @@ func TestInvalidTypeSliceValidRange(t *testing.T) {
 		t.Errorf("Type float should not be used with valid range")
 	}
 }
+
+func TestMustMatchEmail(t *testing.T) {
+
+	type valid struct {
+		Email string `mustmatch:"^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"`
+	}
+
+	v := valid{
+		Email: "me@example.com",
+	}
+
+	err := CheckStruct(&v)
+	if err != nil {
+		t.Errorf("Email should be valid")
+	}
+
+}
+
+func TestMustMatchInvalidEmail(t *testing.T) {
+
+	type valid struct {
+		Email string `mustmatch:"^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"`
+	}
+
+	v := valid{
+		Email: "me@nope@example.com",
+	}
+
+	err := CheckStruct(&v)
+	if err == nil {
+		t.Errorf("Email should be invalid")
+	}
+
+}
