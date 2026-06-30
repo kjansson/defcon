@@ -20,6 +20,8 @@ import (
 // "alwayshas" - slices of primitives - modifies a slice to always contain the given values, if not present they will be appended at validation time
 // "mustmatch" - strings and slices of strings - returns an error if string(s) do not match the given regular expression
 // "mustnotmatch - strings and slices of strings - returns an error if string(s) does match the given regular expression
+// "validrange" - integers and slices of integers - returns an error if value(s) are not within the given range, e.g. "1-10, 44, 100-200"
+// "errormsg" - all types - allows for a custom error message to be returned if validation fails for the field
 
 func CheckStruct(config interface{}) error {
 
