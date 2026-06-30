@@ -100,7 +100,7 @@ func myfunc(c config) {
 # Formatting notes
 
 - Boolean values are evaluated with [strconv.ParseBool](https://pkg.go.dev/strconv#ParseBool).
-- Regular expressions are evaluated with [regex.Compile](https://pkg.go.dev/regexp#Compile).
+- Regular expressions are evaluated with [regex.Compile](https://pkg.go.dev/regexp#Compile). Backslashes in a regular expressions should be escaped with another backslash, i.e. "\." -> "\\."
 - Ranges are expressed with single values (e.g. `1`, `11`, `1024`) and/or ranges (e.g. `10-20`) separated by commas. Example: `"80, 443, 1024-65535"`.
 - Whitespace is ignored in all values representing sets of values and ranges.
 
