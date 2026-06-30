@@ -82,7 +82,10 @@ func TestInt64(t *testing.T) {
 		Val int64 `default:"127"`
 	}
 	test := testStruct{}
-	CheckStruct(&test)
+	err := CheckStruct(&test)
+	if err != nil {
+		t.Errorf("Error checking struct: %s", err)
+	}
 	if test.Val != 127 {
 		t.Errorf("Default value did not set correctly. Wanted 127, got %d", test.Val)
 	}
