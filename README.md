@@ -2,77 +2,108 @@
 Minimalistic library for parsing tagged config structs, handling default values, required values, dependencies and using environment variables.
 
 ## Overview
-defcon is a minimalistic library that parses structs tags, allowing you to tag fields with default values or values from environment variables, mark field as required, or required by other fields. It was created to ease the pain and repetative nature of validating config structs.  
+defcon is a minimalistic library that validates and alters struct values using instructions from annotations. It was created to ease the pain and repetative nature of validating config structs.  
+Handling default, required, valid and externally fetched values in large configuration structs can cause massive bloat. defcon handles all the validation logic for you, and makes your intents visible and easily readable in the struct itself.
 
-Currently supported types for tagging are all ints, floats and strings and slices. Structs are supported using the `required` and `requires` tags. The struct being parsed can be nested.
+Example - manual validation;
+```
+type config struct {
+	required string
+	email string
+	foo string
+	bar int
+	env string
+	percent int
+}
 
-Supported tags are;  
-`default:"<value>"` for primitive types  
-`default:"{foo, bar, ...}"` for slices  
-`required:"<true|TRUE>"`  
-`requires:"field1, field2, ..."`  
-`env:"<envvar_name>"`  
+func myFunc(c config) {
+
+	// Check if required field is set
+	if required == "" {
+		panic("this value must be set and i need to explain why")
+	}
+
+	// Validate an email address
+	regex, err := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	if err != nil {
+		return fmt.Errorf("failed to compile regex: %v", err)
+	}	
+	if !regex.MatchString(c.email) {
+		panic("not a valid email")
+	}
+
+	// Apply a default value
+	if c.foo == "" {
+		c.foo = "default value"
+	}
+
+	// Apply a default value
+	if c.bar == 0 {
+		c.bar == 42
+	}
+
+	// Get a value from environment variable
+	e, found := os.LookupEnv("FOO_BAR")
+	if found {
+		c.env = e
+	}
+
+	// Check that a value is in a valid range
+	if c.percent < 0 || c.percent > 100 {
+		panic("percent must be between 0 and 100")
+	}
+
+}
+```
+
+Using defcon and annotations;
+```
+import "github.com/kjansson/defcon"
+
+type config struct {
+	required string 	`required:"true" errormsg:"this value must be set and i need to explain why"`
+	email string 		`mustmatch:"^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$" errormsg:"not a valid email address"`
+	foo string 			`default:"default value"`
+	bar int 			`default:"42"`
+	env string 			`env`:"FOO_BAR"
+	percent int 		`validrange:"0-100"`
+}
+
+func myfunc(c config) {
+
+	err := defcon.CheckStruct(&c)
+	if err != nil {
+		panic(err)
+	}
+}
+```
+
+## Supported annotations
+
+| Annotation | Example | Target types | Action | Behaviour |
+|:---|:---|:---|:---|:---|
+| default | `default:"foo"`<br>`default:"{foo, bar}"` | primitives, slices of primitive | correcting | Replaces value if field is unset. |
+| required | `required:"true"` | primitives, slices | validating | Returns an error if field is unset. |
+| requires | `requires:"field1, field2"` | any struct field | validating | Returns error if field is not unset and any of the given required fields are unset. |
+| env | `env:"ENV_VAR_FOO"` | primitives, slices of primitives | altering | Tries to set the field with the value of the given environment variable if found, overwriting the value. |
+| defaultfrom | `defaultfrom:"fieldFoo"` | primitives | correcting | Replaces value with the value of another field if annotated field is unset. |
+| mustmatch | `mustmatch:"$foo.*^` | strings, slices of strings | validating | Matches the field(s) against the given regular expression, returns error if not matching. |
+| mustnotmatch | `mustnotmatch:"$foo.*^` | strings, slices of strings | validating | Matches the field(s) against the given regular expression, returns error if matching. |
+| alwayshas | `alwayshas:"foo, bar"`<br>`alwayshas:"1,2,3"` | slices of primitives | correcting | Ensures that a slice always contains a set of given elements. If not present in the slice they will be appended to it. |
+| validrange | `validrange:"1, 5, 50-100"` | integers, slices of integers | validating | Ensures that the integer value(s) falls within the given range. |
+| errormsg | `errormsg:"custom error"` | any, in combination with validating annotation | informing | When used with a validating annotation, any validation error will use this error message. |
 
 ## Behaviour
-The `default` tag will modify the tagged struct field with the given value, if its original value is the primitive type default, i.e. zero for numerical values, zero length string, or zero length slice.  
-The `default` tag will be applied before checking if a field is required, so if a field is tagged with both default and required, the required tag will have no effect.  
-The `env` tag will try to set the value of the tagged field with the value from the given environment variable, wether it is set or not.  
-The `required` tag will cause an error if the tagged fields value is the primitive type default. If applied to a struct, an error will be returned if the tagged struct is considered empty/unset, i.e. if all of its primitive type fields have their default values.  
-The `requires` tag will cause an error if any of the given fields in the tag value have the primitive type default or is considered an empty struct.  
+- Values from environment variables will be applied before defaults.
+- Values from defaults and environment variables takes precedence, i.e. a `required` field as with a `default` value will always be filled in and the `required` check will never fail.
 
-Tags with invalid values such as references to non-existing fields, values that will overflow the numerical types, invalid numerical values, etc. will result in an error.  
+# Formatting notes
 
+- Boolean values are evaluated with [strconv.ParseBool](https://pkg.go.dev/strconv#ParseBool).
+- Regular expressions are evaluated with [regex.Compile](https://pkg.go.dev/regexp#Compile).
+- Ranges are expressed with single values (e.g. `1`, `11`, `1024`) and/or ranges (e.g. `10-20`) separated by commas. Example: `"80, 443, 1024-65535"`.
+- Whitespace is ignored in all values representing sets of values and ranges.
 
 ## Documentation
 https://pkg.go.dev/github.com/kjansson/defcon
 
-## Example
-
-```
-package main
-
-import (
-	"fmt"
-
-	defcon "github.com/kjansson/defcon"
-)
-
-type networkConfig struct {
-	Protocol string
-}
-
-type config struct {
-	Address  string   `default:"localhost"`
-	Port     int      `default:"8080" requires:"Network"`
-	User     string   `required:"true"`
-	Password string   `required:"true"`
-	Network  networkConfig	// Implicitly required by field Port
-	Options  []string `default:"{foo, bar}"`
-	Name     string   `env:"APP_NAME"`
-}
-
-func main() {
-
-	_ = os.Setenv("APP_NAME", "myapp") // For illustration purposes, this would normally be set outside of the code 
-
-	configuration := config{}
-	// Fails if these are empty
-	configuration.User = "user"
-	configuration.Password = "qwerty"
-	configuration.Network.Protocol = "HTTP"	// Field "Port" also requires the field "Network" which has to have set fields. 
-
-	err := defcon.CheckConfigStruct(&configuration)
-	if err != nil {
-		fmt.Println("Parsing error:", err)
-	}
-
-	fmt.Println(configuration.Address) 	// Output: "localhost"
-	fmt.Println(configuration.Port)    	// Output: "8080"
-	fmt.Println(configuration.Options)	// Output: "[foo bar]"
-	fmt.Println(configuration.Name)     // Output: "myapp"
-
-}
-```
-
-Try it out!  
-https://go.dev/play/p/6sIpyODLlv7
