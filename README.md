@@ -97,17 +97,12 @@ func myfunc(c config) {
 - Values from environment variables will be applied before defaults.
 - Values from defaults and environment variables takes precedence, i.e. a `required` field as with a `default` value will always be filled in and the `required` check will never fail.
 
-<<<<<<< HEAD
 # Formatting notes
 
-- Boolean values (i.e for `required`) are case insensitive. `TRUE`, `True` and `true` are all valid.
+- Boolean values are evaluated with [strconv.ParseBool](https://pkg.go.dev/strconv#ParseBool).
 - Regular expressions are evaluated with [regex.Compile](https://pkg.go.dev/regexp#Compile).
 - Ranges are expressed with single values (e.g. `1`, `11`, `1024`) and/or ranges (e.g. `10-20`) separated by commas. Example: `"80, 443, 1024-65535"`.
-- Whitespace is ignored in all values representing sets of values.
-=======
-Tags with invalid values such as references to non-existing fields, values that will overflow the numerical types, invalid numerical values, etc. will result in an error.  
-
->>>>>>> main
+- Whitespace is ignored in all values representing sets of values and ranges.
 
 ## Documentation
 https://pkg.go.dev/github.com/kjansson/defcon

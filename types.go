@@ -5,6 +5,7 @@ import (
 	"regexp"
 )
 
+// struct field annotations
 type annotations struct {
 	Required         bool           // Indicates if the field is required
 	DefaultValue     string         // Default value for the field if not set
@@ -23,7 +24,6 @@ type annotations struct {
 
 // common interface for all field types
 type field interface {
-	//new(*reflect.Value)
 	handle(*reflect.Value, *annotations) error
 }
 
