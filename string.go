@@ -6,21 +6,15 @@ import (
 	"reflect"
 )
 
-type stringField struct {
-	field reflect.Value
-}
+type stringField struct{}
 
-func (f *stringField) new(v *reflect.Value) {
-	f.field = *v
-}
-
-func (f *stringField) handle(a *annotations) error {
+func (f *stringField) handle(val *reflect.Value, annotations *annotations) error {
 
 	// Lookup environment variable if specified and field is empty
-	if a.EnvVarName != "" && f.field.IsZero() {
-		envValue, found := os.LookupEnv(a.EnvVarName)
+	if annotations.EnvVarName != "" && val.IsZero() {
+		envValue, found := os.LookupEnv(annotations.EnvVarName)
 		if found {
-			err := setValue(&f.field, envValue)
+			err := setValue(val, envValue)
 			if err != nil {
 				return fmt.Errorf("failed to set value from environment variable: %v", err)
 			}
@@ -28,32 +22,31 @@ func (f *stringField) handle(a *annotations) error {
 	}
 
 	// Mangage default value
-	if a.DefaultValue != "" && f.field.IsZero() {
-		err := setValue(&f.field, a.DefaultValue)
+	if annotations.DefaultValue != "" && val.IsZero() {
+		err := setValue(val, annotations.DefaultValue)
 		if err != nil {
 			return fmt.Errorf("failed to set default value: %v", err)
 		}
 	}
 
 	// Manage required field
-	if a.Required {
-		if f.field.IsZero() {
-			// Return an error if the field is required but has no value
+	if annotations.Required {
+		if val.IsZero() {
 			return fmt.Errorf("field is marked as required but has no value")
 		}
 	}
 
 	// Manage mustmatch
-	if a.MustMatch != nil && !f.field.IsZero() {
-		if !a.MustMatch.MatchString(f.field.String()) {
-			return fmt.Errorf("field value '%s' does not match regex '%s'", f.field.String(), a.MustMatch)
+	if annotations.MustMatch != nil && !val.IsZero() {
+		if !annotations.MustMatch.MatchString(val.String()) {
+			return fmt.Errorf("field value '%s' does not match regex '%s'", val.String(), annotations.MustMatch)
 		}
 	}
 
 	// Manage mustnotmatch
-	if a.MustNotMatch != nil && !f.field.IsZero() {
-		if a.MustNotMatch.MatchString(f.field.String()) {
-			return fmt.Errorf("field value '%s' matches forbidden regex '%s'", f.field.String(), a.MustNotMatch)
+	if annotations.MustNotMatch != nil && !val.IsZero() {
+		if annotations.MustNotMatch.MatchString(val.String()) {
+			return fmt.Errorf("field value '%s' matches forbidden regex '%s'", val.String(), annotations.MustNotMatch)
 		}
 	}
 

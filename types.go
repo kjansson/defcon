@@ -23,8 +23,8 @@ type annotations struct {
 
 // common interface for all field types
 type field interface {
-	new(*reflect.Value)
-	handle(*annotations) error
+	//new(*reflect.Value)
+	handle(*reflect.Value, *annotations) error
 }
 
 // getType returns the appropriate field type based on the reflect.Value kind

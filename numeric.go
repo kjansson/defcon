@@ -9,23 +9,17 @@ import (
 	intervals "github.com/kjansson/go-intervals"
 )
 
-type numericField struct {
-	field reflect.Value
-}
+type numericField struct{}
 
-func (f *numericField) new(v *reflect.Value) {
-	f.field = *v
-}
-
-func (f *numericField) handle(a *annotations) error {
+func (f *numericField) handle(val *reflect.Value, annotations *annotations) error {
 
 	// Manage mustmatch
 
 	// Manage environment variables
-	if a.EnvVarName != "" && f.field.IsZero() {
-		envValue, found := os.LookupEnv(a.EnvVarName)
+	if annotations.EnvVarName != "" && val.IsZero() {
+		envValue, found := os.LookupEnv(annotations.EnvVarName)
 		if found {
-			err := setValue(&f.field, envValue)
+			err := setValue(val, envValue)
 			if err != nil {
 				return fmt.Errorf("failed to set value from environment variable: %v", err)
 			}
@@ -33,36 +27,36 @@ func (f *numericField) handle(a *annotations) error {
 	}
 
 	// Manage default values
-	if a.DefaultValue != "" && f.field.IsZero() {
-		err := setValue(&f.field, a.DefaultValue)
+	if annotations.DefaultValue != "" && val.IsZero() {
+		err := setValue(val, annotations.DefaultValue)
 		if err != nil {
 			return fmt.Errorf("failed to set default value: %v", err)
 		}
 	}
 
 	// Manage required field
-	if a.Required {
-		if f.field.IsZero() {
+	if annotations.Required {
+		if val.IsZero() {
 			// Return an error if the field is required but has no value
 			return fmt.Errorf("field is marked as required but has no value")
 		}
 	}
 
 	// Manage valid range
-	if a.ValidRange != "" && !f.field.IsZero() {
+	if annotations.ValidRange != "" && !val.IsZero() {
 
-		if !f.field.CanInt() {
+		if !val.CanInt() {
 			return fmt.Errorf("intervals are only supported on integer fields")
 		}
 
-		interval, err := intervals.New(a.ValidRange)
+		interval, err := intervals.New(annotations.ValidRange)
 		if err != nil {
 			return fmt.Errorf("failed to create interval: %v", err)
 		}
 
 		values := interval.Values()
 
-		if !slices.Contains(values, f.field.Int()) {
+		if !slices.Contains(values, val.Int()) {
 			return fmt.Errorf("integer value is out of the specified range")
 		}
 

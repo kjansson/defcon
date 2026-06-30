@@ -11,13 +11,7 @@ import (
 	"unsafe"
 )
 
-type structField struct {
-	field reflect.Value
-}
-
-func (f *structField) new(v *reflect.Value) {
-	f.field = *v
-}
+type structField struct{}
 
 // getAnnotations retrieves the annotations for a struct field
 func (f *structField) getAnnotations(v reflect.StructField) (*annotations, error) {
@@ -113,26 +107,26 @@ func (f *structField) getAnnotations(v reflect.StructField) (*annotations, error
 	return &annotations, nil
 }
 
-func (f *structField) handle(a *annotations) error {
+func (f *structField) handle(val *reflect.Value, annotations *annotations) error {
 
 	// Check which fields are set in the struct and store them for validation of "requires" tags
 	setFields := []string{}
-	for i := 0; i < f.field.NumField(); i++ {
-		v := f.field.Field(i)
-		name := f.field.Type().Field(i).Name
+	for i := 0; i < val.NumField(); i++ {
+		v := val.Field(i)
+		name := val.Type().Field(i).Name
 		if !v.IsZero() {
 			setFields = append(setFields, name)
 		}
 	}
 
 	// Iterate struct fields and handle each field recursively
-	for i := 0; i < f.field.NumField(); i++ {
+	for i := 0; i < val.NumField(); i++ {
 
 		var subField reflect.Value
-		v := f.field.Field(i)
+		v := val.Field(i)
 
 		// Create a exported version of the field if it is unexported to allow access to its value
-		if !f.field.Type().Field(i).IsExported() {
+		if !val.Type().Field(i).IsExported() {
 			subField = reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem() // Get access to unexported field
 		} else {
 			subField = v
@@ -145,7 +139,7 @@ func (f *structField) handle(a *annotations) error {
 		}
 
 		// Get annotations for the current field
-		annotations, err := f.getAnnotations(f.field.Type().Field(i))
+		annotations, err := f.getAnnotations(val.Type().Field(i))
 		if err != nil {
 			return fmt.Errorf("invalid annotation syntax: %s", err)
 		}
@@ -157,21 +151,21 @@ func (f *structField) handle(a *annotations) error {
 			for _, requiredField := range annotations.RequiresField {
 
 				if !token.IsIdentifier(requiredField) {
-					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", requiredField, f.field.Type().Field(i).Name)
+					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", requiredField, val.Type().Field(i).Name)
 				}
 				if !slices.Contains(setFields, requiredField) { // Check if the required field is set
 					// Use custom error message if provided in the annotations
 					if annotations.ErrorMsg != "" {
 						return fmt.Errorf("%s", annotations.ErrorMsg)
 					}
-					return fmt.Errorf("field %s requires field %s to be set", f.field.Type().Field(i).Name, requiredField)
+					return fmt.Errorf("field %s requires field %s to be set", val.Type().Field(i).Name, requiredField)
 				}
 			}
 		}
 
 		// Handle the field based on its type
-		fieldType.new(&subField)
-		err = fieldType.handle(annotations)
+		//fieldType.new(&subField)
+		err = fieldType.handle(&subField, annotations)
 		if err != nil {
 			// Use custom error message if provided in the annotations
 			if annotations.ErrorMsg != "" {
