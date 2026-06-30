@@ -98,10 +98,12 @@ func TestFloat32(t *testing.T) {
 		Val float32 `default:"127.127"`
 	}
 	test := testStruct{}
+
 	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Error checking struct: %s", err)
 	}
+
 	if test.Val != 127.127 {
 		t.Errorf("Default value did not set correctly. Wanted 127.127, got %f", test.Val)
 	}
@@ -114,7 +116,12 @@ func TestFloat64(t *testing.T) {
 		Val float64 `default:"127.127"`
 	}
 	test := testStruct{}
-	CheckStruct(&test)
+
+	err := CheckStruct(&test)
+	if err != nil {
+		t.Errorf("Error checking struct: %s", err)
+	}
+
 	if test.Val != 127.127 {
 		t.Errorf("Default value did not set correctly. Wanted 127.127, got %f", test.Val)
 	}
@@ -127,7 +134,12 @@ func TestString(t *testing.T) {
 		Val string `default:"test"`
 	}
 	test := testStruct{}
-	CheckStruct(&test)
+
+	err := CheckStruct(&test)
+	if err != nil {
+		t.Errorf("Error checking struct: %s", err)
+	}
+
 	if test.Val != "test" {
 		t.Errorf("Default value did not set correctly. Wanted 'test', got '%s'", test.Val)
 	}
@@ -140,10 +152,12 @@ func TestBoolTrue(t *testing.T) {
 		Val bool `default:"true"`
 	}
 	test := testStruct{}
+
 	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
+
 	if test.Val != true {
 		t.Errorf("Default value did not set correctly. Wanted true, got %t", test.Val)
 	}
@@ -156,10 +170,12 @@ func TestBoolFalse(t *testing.T) {
 		Val bool `default:"false"`
 	}
 	test := testStruct{}
+
 	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
+
 	if test.Val != false {
 		t.Errorf("Default value did not set correctly. Wanted false, got %t", test.Val)
 	}
@@ -172,10 +188,12 @@ func TestBoolTRUE(t *testing.T) {
 		Val bool `default:"TRUE"`
 	}
 	test := testStruct{}
+
 	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
+
 	if test.Val != true {
 		t.Errorf("Default value did not set correctly. Wanted true, got %t", test.Val)
 	}
@@ -188,10 +206,12 @@ func TestBoolFALSE(t *testing.T) {
 		Val bool `default:"FALSE"`
 	}
 	test := testStruct{}
+
 	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
+
 	if test.Val != false {
 		t.Errorf("Default value did not set correctly. Wanted false, got %t", test.Val)
 	}
@@ -204,10 +224,12 @@ func TestBoolMixedCaseTrue(t *testing.T) {
 		Val bool `default:"True"`
 	}
 	test := testStruct{}
+
 	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
+
 	if test.Val != true {
 		t.Errorf("Default value did not set correctly. Wanted true, got %t", test.Val)
 	}
@@ -220,10 +242,12 @@ func TestBoolMixedCaseFalse(t *testing.T) {
 		Val bool `default:"False"`
 	}
 	test := testStruct{}
+
 	err := CheckStruct(&test)
 	if err != nil {
 		t.Errorf("Boolean default value failed: %s", err)
 	}
+
 	if test.Val != false {
 		t.Errorf("Default value did not set correctly. Wanted false, got %t", test.Val)
 	}
@@ -235,7 +259,9 @@ func TestInvalidBoolean(t *testing.T) {
 	type testStruct struct {
 		Val bool `default:"notabool"`
 	}
+
 	test := testStruct{}
+
 	err := CheckStruct(&test)
 	if err == nil {
 		t.Errorf("Invalid boolean tag value was not detected")
