@@ -39,40 +39,32 @@ func CheckStruct(config interface{}) error {
 }
 
 // Get reflection type and returns its type family and number of bits
-func getTypeDetails(v reflect.Value) (string, int) {
+func getTypeDetails(v reflect.Type) (string, int, error) {
 
 	var bits int
-	// Extract type family and bits (if any) from reflect type, e.g. "int32" => ["int", "32"]
+	var err error
+
+	// Extract type family and bits (if any) from reflect type string, e.g. "int32" => ["int", "32"]
 	family := regexp.MustCompile("^([a-zA-Z]+)([0-9]*)").FindStringSubmatch(v.Kind().String())
 
 	if family[2] == "" {
 		bits = 0
 	} else {
-		bits, _ = strconv.Atoi(family[2]) // This should be safe w/o error checking since the vaule come from the reflect kind
+		bits, err = strconv.Atoi(family[2])
+		if err != nil {
+			return "", 0, fmt.Errorf("could not convert type: %s", err)
+		}
 	}
-	return family[1], bits
+	return family[1], bits, nil
 }
 
-// Get reflection type and returns its type family and number of bits
-func getElementTypeDetails(v reflect.Value) (string, int) {
-
-	var bits int
-	// Extract type family and bits (if any) from reflect type, e.g. "int32" => ["int", "32"]
-	e := v.Type().Elem()
-	family := regexp.MustCompile("^([a-zA-Z]+)([0-9]*)").FindStringSubmatch(e.Kind().String())
-
-	if family[2] == "" {
-		bits = 0
-	} else {
-		bits, _ = strconv.Atoi(family[2]) // This should be safe w/o error checking since the vaule come from the reflect kind
-	}
-	return family[1], bits
-}
-
-// Sets a value
+// Sets a value back into reflect.Value by determing it's value and parsing the value from a string
 func setValue(v *reflect.Value, val string) error {
 
-	family, bits := getTypeDetails(*v) // Get type family and number of bits if applicable
+	family, bits, err := getTypeDetails(v.Type()) // Get type family and number of bits if applicable
+	if err != nil {
+		return fmt.Errorf("could not determine type: %s", err)
+	}
 
 	// Parse numerical values if needed and set values
 	switch family {
@@ -97,7 +89,12 @@ func setValue(v *reflect.Value, val string) error {
 	case "string":
 		v.SetString(val)
 	case "slice":
-		eType, bits := getElementTypeDetails(*v)
+
+		t := v.Type().Elem() // Get the type of the slice elements
+		eType, bits, err := getTypeDetails(t)
+		if err != nil {
+			return fmt.Errorf("could not determine element type: %s", err)
+		}
 		var uv = reflect.Value{}
 		switch eType {
 		case "int":
@@ -202,7 +199,10 @@ func setValue(v *reflect.Value, val string) error {
 // createTypeFromValue returns a reflect.Value of same type as typedValue, containing the value from untypedValueString if value is parseable for the type
 func createTypeFromValue(typedValue reflect.Value, untypedValueString string) (reflect.Value, error) {
 
-	family, bits := getTypeDetails(typedValue) // Get type family and number of bits if applicable
+	family, bits, err := getTypeDetails(typedValue.Type()) // Get type family and number of bits if applicable
+	if err != nil {
+		return reflect.Value{}, fmt.Errorf("could not determine type: %s", err)
+	}
 	untypedValueString = strings.TrimSpace(untypedValueString)
 
 	// Parse numerical values if needed and set values
