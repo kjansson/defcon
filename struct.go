@@ -5,6 +5,7 @@ import (
 	"go/token"
 	"reflect"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -158,7 +159,7 @@ func (f *structField) handle(a *annotations) error {
 				if !token.IsIdentifier(requiredField) {
 					return fmt.Errorf("field %s tagged as required by field %s does not seem to have a valid name", requiredField, f.field.Type().Field(i).Name)
 				}
-				if !existsIn(setFields, requiredField) { // Check if the required field is set
+				if !slices.Contains(setFields, requiredField) { // Check if the required field is set
 					// Use custom error message if provided in the annotations
 					if annotations.ErrorMsg != "" {
 						return fmt.Errorf("%s", annotations.ErrorMsg)
@@ -181,15 +182,4 @@ func (f *structField) handle(a *annotations) error {
 	}
 
 	return nil
-}
-
-// Finds a string value in an array of strings
-func existsIn(subject []string, searchValue string) bool {
-
-	for _, value := range subject {
-		if value == searchValue {
-			return true
-		}
-	}
-	return false
 }

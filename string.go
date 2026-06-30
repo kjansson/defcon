@@ -16,10 +16,8 @@ func (f *stringField) new(v *reflect.Value) {
 
 func (f *stringField) handle(a *annotations) error {
 
-	isZero := f.field.IsZero()
-
 	// Lookup environment variable if specified and field is empty
-	if a.EnvVarName != "" && isZero {
+	if a.EnvVarName != "" && f.field.IsZero() {
 		envValue, found := os.LookupEnv(a.EnvVarName)
 		if found {
 			err := setValue(&f.field, envValue)
@@ -30,7 +28,7 @@ func (f *stringField) handle(a *annotations) error {
 	}
 
 	// Mangage default value
-	if a.DefaultValue != "" && isZero {
+	if a.DefaultValue != "" && f.field.IsZero() {
 		err := setValue(&f.field, a.DefaultValue)
 		if err != nil {
 			return fmt.Errorf("failed to set default value: %v", err)
@@ -39,21 +37,21 @@ func (f *stringField) handle(a *annotations) error {
 
 	// Manage required field
 	if a.Required {
-		if isZero {
+		if f.field.IsZero() {
 			// Return an error if the field is required but has no value
 			return fmt.Errorf("field is marked as required but has no value")
 		}
 	}
 
 	// Manage mustmatch
-	if a.MustMatch != nil && !isZero {
+	if a.MustMatch != nil && !f.field.IsZero() {
 		if !a.MustMatch.MatchString(f.field.String()) {
 			return fmt.Errorf("field value '%s' does not match regex '%s'", f.field.String(), a.MustMatch)
 		}
 	}
 
 	// Manage mustnotmatch
-	if a.MustNotMatch != nil && !isZero {
+	if a.MustNotMatch != nil && !f.field.IsZero() {
 		if a.MustNotMatch.MatchString(f.field.String()) {
 			return fmt.Errorf("field value '%s' matches forbidden regex '%s'", f.field.String(), a.MustNotMatch)
 		}
